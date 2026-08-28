@@ -35,6 +35,7 @@ write through the narrow `StateEmitter` interface it's handed.
   - [Combinators: retry, withTimeout, debounced](#combinators-retry-withtimeout-debounced)
   - [Optimistic updates](#optimistic-updates)
   - [The transaction ledger](#the-transaction-ledger)
+- [Dispatch taxonomy: Intent, Command, Event](#dispatch-taxonomy-intent-command-event)
 - [Testing](#testing)
 - [Flutter integration](#flutter-integration)
 - [Architecture](#architecture)
@@ -67,6 +68,11 @@ write through the narrow `StateEmitter` interface it's handed.
 - **Zero Flutter dependency** — the core library is plain Dart, usable in
   a CLI, a server, or a Flutter app; see [Flutter integration](#flutter-integration)
   for how to wire it into widgets.
+- **An optional Intent/Command/Event taxonomy** — for features where
+  `dispatch`'s one-type-plays-every-role model gets ambiguous, `send` +
+  `Intent` + `Command` split "what triggered this", "what's allowed to
+  write", and "what happened" into three separate types instead. See
+  [Dispatch taxonomy](#dispatch-taxonomy-intent-command-event).
 
 ## Installation
 
@@ -273,6 +279,100 @@ final unsubscribe = store.observe((txn) => print(txn));
 unsubscribe();
 ```
 
+## Dispatch taxonomy: Intent, Command, Event
+
+`dispatch` (above) is enough for a feature where one event type driving a
+Flow and/or an Echo is unambiguous. Some features outgrow that: the same
+dispatched object ends up meaning both "the user asked for X" and "X is
+what happened", and a widget can just as easily call `dispatch` as any
+internal code can. `Intent`, `Command`, and `Event` split that back apart
+into three sealed, purpose-built types — a `sealed class Dispatch` with
+`Intent`, `Command<S>`, and `Event` as its only direct subtypes, each
+still open for you to extend:
+
+| Type | Direction | Meaning | Entry point |
+|---|---|---|---|
+| `Intent` | In, from outside (UI, another feature) | "Do this." The only thing a screen should send. | `store.send(intent)` |
+| `Command<S>` | Internal only | "Set state to exactly this." The only legal write besides a Flow. | `store.execute(command)` |
+| `Event` | Out, broadcast only | "This happened." Never changes state. | `store.publish(event)` |
+
+An `Intent` is routed to a registered `IntentHandler`, which receives a
+narrow `IntentContext<S>` — `execute`, `launch`, `publish`, and a
+read-only `state` getter, nothing else (ISP: no direct state mutation):
+
+```dart
+class Increment extends Intent {
+  const Increment();
+}
+
+class SetCount extends Command<CounterState> {
+  final int value;
+  const SetCount(this.value);
+
+  @override
+  String get name => 'setCount'; // ledger source; defaults to this already
+
+  @override
+  CounterState reduce(CounterState state) => CounterState(value: value);
+}
+
+class CounterFeature extends Feature<CounterState> {
+  @override
+  CounterState get initial => const CounterState();
+
+  @override
+  void registerIntents(IntentRegistry<CounterState> intents) {
+    intents.on<Increment>((intent, ctx) {
+      ctx.execute(SetCount(ctx.state.value + 1));
+    });
+  }
+}
+
+store.send(const Increment());
+```
+
+`IntentContext.launch` starts a Ripple exactly like `Store.runRipple`
+does (same fire-and-forget contract, same `FlowScope` for lifetime
+control) — the difference is what the Ripple can do with it. Because the
+Ripple body can capture its handler's `ctx` by closure, it can call
+`ctx.execute(...)` *after an await*, not just emit raw state through
+`StateEmitter`:
+
+```dart
+intents.on<LogIn>((intent, ctx) {
+  ctx.execute(const SetSessionStatus(status: 'authenticating'));
+  ctx.launch((event, emit) async {
+    await authApi.signIn(intent.username);
+    ctx.execute(SetSessionStatus(username: intent.username, status: 'signedIn'));
+    ctx.publish(SessionStarted(intent.username));
+  }, source: 'authenticate');
+});
+```
+
+Every commit — from a Flow, a Ripple emission, an optimistic commit or
+rollback, or an executed Command alike — automatically publishes a
+built-in `EventCommitted(source)` to Echoes, so "something in my state
+changed" never needs per-source wiring:
+
+```dart
+echos.echo<EventCommitted>('devtools', (event, lens) {
+  log('commit from ${event.source} -> ${lens.state}');
+});
+```
+
+A full, runnable walkthrough — Intent, two Commands (one executed
+synchronously, one from inside a Ripple after an await), a custom
+`Event`, and the automatic `EventCommitted` — lives in
+[`example/intent_command_event_example.dart`](example/intent_command_event_example.dart):
+
+```
+dart run example/intent_command_event_example.dart
+```
+
+This taxonomy is additive, not a replacement: `dispatch`/`FlowRegistry`
+remain fully supported for features that don't need the extra
+separation, and both can be used side by side in the same `Feature`.
+
 ## Testing
 
 `tenet_testing.dart` is a separate entry point so production code (which
@@ -303,9 +403,12 @@ test('checkout Ripple commits paying then done', () async {
 `Store.runRippleAndWait`, so assertions right after it are never racing
 the Ripple's own timers.
 
-See [`test/tenet_test.dart`](test/tenet_test.dart) for the full suite,
-covering Flows, Ripple cancellation, Echoes, all three combinators,
-optimistic rollback, and the ledger.
+See [`test/tenet_test.dart`](test/tenet_test.dart) for the Flow/Ripple/Echo
+suite — Flows, Ripple cancellation, Echoes, all three combinators,
+optimistic rollback, and the ledger — and
+[`test/intent_command_event_test.dart`](test/intent_command_event_test.dart)
+for the Intent/Command/Event suite, including the closure-captured-`ctx`
+pattern above.
 
 ## Flutter integration
 
@@ -355,8 +458,9 @@ navigating away cancels in-flight work instead of leaking it.
   `Feature`.
 - **LSP** — every `StateLens`/`StateEmitter` implementation is
   substitutable; Echoes and Ripples never depend on a concrete type.
-- **ISP** — `FlowRegistry` and `EchoRegistry` are narrow, separate
-  interfaces; Flow authors never see Echo registration and vice versa.
+- **ISP** — `FlowRegistry`, `EchoRegistry`, and `IntentRegistry` are
+  narrow, separate registration interfaces; an `IntentContext` exposes
+  only `execute`/`launch`/`publish`/`state` — no direct mutation.
 - **DIP** — Ripples depend on the abstract `StateEmitter`, never on a
   concrete store.
 
@@ -370,13 +474,16 @@ lib/
     core.dart                # Flow, StateEmitter, StateLens, RippleBody, EchoBody
     transaction.dart         # Transaction — the time-travel ledger record
     flow_scope.dart          # FlowScope, ScopeDeadException
-    store.dart                # Feature, FlowRegistry, EchoRegistry, Store
+    dispatch.dart            # Intent, Command, Event, EventCommitted
+    store.dart                # Feature, FlowRegistry, EchoRegistry, IntentRegistry, Store
     combinators.dart         # retry, withTimeout, debounced
     testing/feature_harness.dart
 example/
-  tenet_example.dart         # runnable, end-to-end example
+  tenet_example.dart                    # Flow/Ripple/Echo, end-to-end
+  intent_command_event_example.dart     # Intent/Command/Event, end-to-end
 test/
-  tenet_test.dart            # full test suite
+  tenet_test.dart                  # Flow/Ripple/Echo suite
+  intent_command_event_test.dart   # Intent/Command/Event suite
 ```
 
 ## Development
@@ -387,10 +494,11 @@ dart format --output=none --set-exit-if-changed .
 dart analyze
 dart test
 dart run example/tenet_example.dart
+dart run example/intent_command_event_example.dart
 ```
 
-CI (`.github/workflows/ci.yaml`) runs the same four steps on every push
-and pull request.
+CI (`.github/workflows/ci.yaml`) runs the same checks on every push and
+pull request.
 
 ## Versioning and releases
 
