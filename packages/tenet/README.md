@@ -163,10 +163,16 @@ Dispatch synchronously through the `Store`:
 store.dispatch(RemoveItem('sku-123'));
 ```
 
-`dispatch` fails fast — it throws `StateError` — only when an event type
-has **neither** a Flow **nor** an Echo registered. An Echo-only event
-(e.g. one that exists purely to drive analytics) doesn't need a no-op Flow
-just to be dispatchable.
+`dispatch` fails fast — it throws `StateError` — only when an event has
+**neither** a Flow **nor** an Echo registered. An Echo-only event (e.g.
+one that exists purely to drive analytics) doesn't need a no-op Flow just
+to be dispatchable.
+
+Routing follows the event's **runtime** type, never the static type at the
+call site — the same rule `send` and `publish` use. Passing an event
+through a variable or generic wrapper that widens its static type still
+reaches the Flow and Echoes it was registered against, instead of quietly
+matching nothing.
 
 ### Ripple — cancellable async processes
 
@@ -209,6 +215,17 @@ the call site:
 store.onError((error, stackTrace) => log.warning('ripple failed', error));
 ```
 
+With no handler registered, failures go to the current `Zone`'s
+uncaught-error handler instead — the same place an unawaited future's
+error lands, which in Flutter means the console and `FlutterError.onError`.
+A Ripple or Echo that throws is never silently swallowed.
+
+A Ripple's `emit` is only live while the Ripple itself is: once its future
+settles, a later emission from work that outlived it is dropped and
+reported rather than committed. That is what keeps a `withTimeout` body
+that keeps running past its timeout from writing state the store already
+considers settled — see [Combinators](#combinators-retry-withtimeout-debounced).
+
 ### Echo — read-only side effects
 
 An `EchoBody<S, E>` is `void Function(E event, StateLens<S> lens)`. `lens`
@@ -221,12 +238,17 @@ echos.echo<CheckoutRequested>((event, lens) {
 }, name: 'analytics');
 ```
 
-`name` is optional here too — a label for readability, defaulting to
-`E`'s type name — and, unlike a Flow's, isn't consumed anywhere else
-yet.
+`name` is optional here too — it labels the Echo in error reports and
+defaults to `E`'s type name.
 
-Echoes fire whenever their event type is `dispatch`ed — whether or not
-that type also has a Flow.
+Echoes fire whenever a matching event is `dispatch`ed or `publish`ed —
+whether or not that type also has a Flow. Matching is by "is the event an
+`E`?", so an Echo registered for a supertype receives every subtype, and
+`echo<Event>(...)` is a legitimate catch-all audit hook.
+
+An Echo that throws never takes down the dispatch that triggered it: the
+error goes to `onError` (or the `Zone`, if none is registered) and the
+remaining Echoes still run.
 
 ### Combinators: `retry`, `withTimeout`, `debounced`
 
@@ -247,10 +269,17 @@ final resilientSync = retry<CounterState, SyncRequested>(
 store.runRipple(resilientSync, event: SyncRequested(store.state.value));
 ```
 
-- `retry(body, {required max, delay})` — retries on any thrown error, up
-  to `max` times, with linear backoff of `delay` between attempts.
+- `retry(body, {required max, delay})` — retries on a thrown error, up to
+  `max` times (so `body` runs at most `max + 1` times), waiting `delay`
+  between attempts. A `ScopeDeadException` is never retried: the scope was
+  cancelled, so every further attempt would do real work only to fail the
+  same way.
 - `withTimeout(body, limit)` — fails with `TimeoutException` if `body`
-  doesn't finish within `limit`.
+  doesn't finish within `limit`. Dart cannot abort a future, so `body`
+  itself keeps running — but it can no longer change state, since the
+  store settles the Ripple's emitter when the timeout fires. Give `body` a
+  real cancellation path (race `scope.cancelled`, close the `HttpClient`)
+  if the work itself must stop, not just its effect on state.
 - `debounced(body, window, {now})` — drops calls that arrive within
   `window` of the last one that actually ran; `now` is an injectable
   clock for deterministic tests.
@@ -286,6 +315,27 @@ final unsubscribe = store.observe((txn) => print(txn));
 // ...
 unsubscribe();
 ```
+
+The ledger keeps the most recent 1000 transactions by default and drops
+the oldest beyond that — an in-memory list that only grows is a slow leak
+in a long-lived process. `sequence` keeps counting from the very first
+commit regardless, so a trimmed ledger still tells you how much history
+came before it:
+
+```dart
+Store<CartState>(CartFeature(), ledgerLimit: 200);   // keep less
+Store<CartState>(CartFeature(), ledgerLimit: null);  // keep everything
+```
+
+### Closing a store
+
+`store.close()` cancels every Ripple (by closing `rootScope`), drops every
+ledger observer and error handler, and refuses any further
+`dispatch`/`send`/`execute`/`publish` with a `StateError` — a closed store
+is done, not merely quiet. `state` and `ledger` stay readable; closing
+ends a store's writes, it doesn't erase its history. Starting a Ripple on
+a closed store is reported through the usual error path rather than
+thrown, since `runRipple` never throws at its call site.
 
 ## Dispatch taxonomy: Intent, Command, Event
 
