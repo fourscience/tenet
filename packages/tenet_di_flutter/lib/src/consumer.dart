@@ -4,7 +4,7 @@ import 'package:tenet_di/tenet_di.dart';
 import 'provider_scope.dart';
 import 'widget_ref.dart';
 
-/// A widget that rebuilds when any provider it [WidgetRef.watch]es
+/// A widget that rebuilds when any provider it [WidgetRef.observe]s
 /// changes. Subclass this the same way you would `StatelessWidget`, but
 /// override `build(context, ref)` instead of `build(context)`:
 ///
@@ -14,7 +14,7 @@ import 'widget_ref.dart';
 ///
 ///   @override
 ///   Widget build(BuildContext context, WidgetRef ref) {
-///     final greeting = ref.watch(greetingProvider);
+///     final greeting = ref.observe(greetingProvider);
 ///     return Text(greeting);
 ///   }
 /// }
@@ -25,8 +25,8 @@ abstract class ConsumerWidget extends StatefulWidget {
   /// Creates a widget with access to a [WidgetRef] in [build].
   const ConsumerWidget({super.key});
 
-  /// Builds this widget's UI. Called again whenever a provider read via
-  /// `ref.watch` in the previous build changes.
+  /// Builds this widget's UI. Called again whenever a provider resolved
+  /// via `ref.observe` in the previous build changes.
   Widget build(BuildContext context, WidgetRef ref);
 
   @override
@@ -38,7 +38,7 @@ abstract class ConsumerWidget extends StatefulWidget {
 ///
 /// ```dart
 /// Consumer(
-///   builder: (context, ref, child) => Text(ref.watch(greetingProvider)),
+///   builder: (context, ref, child) => Text(ref.observe(greetingProvider)),
 /// )
 /// ```
 final class Consumer extends ConsumerWidget {
@@ -51,7 +51,7 @@ final class Consumer extends ConsumerWidget {
   final Widget Function(BuildContext context, WidgetRef ref, Widget? child)
       builder;
 
-  /// A subtree that doesn't depend on any watched provider, built once
+  /// A subtree that doesn't depend on any observed provider, built once
   /// and passed through to [builder] on every rebuild.
   final Widget? child;
 
@@ -93,8 +93,8 @@ final class _ConsumerWidgetState extends State<ConsumerWidget> {
   }
 }
 
-/// Tracks, per build, which providers were watched — subscribing to new
-/// ones and unsubscribing from ones no longer watched — so the widget
+/// Tracks, per build, which providers were observed — subscribing to new
+/// ones and unsubscribing from ones no longer observed — so the widget
 /// only rebuilds for providers its *current* build actually depends on.
 final class _WidgetRefImpl implements WidgetRef {
   _WidgetRefImpl(this.container, this._onChanged);
@@ -102,26 +102,26 @@ final class _WidgetRefImpl implements WidgetRef {
   final ProviderContainer container;
   final void Function() _onChanged;
   final Map<ProviderBase, void Function()> _subscriptions = {};
-  Set<ProviderBase> _watchedThisBuild = {};
+  Set<ProviderBase> _observedThisBuild = {};
 
   @override
-  T read<T>(ProviderBase<T> provider) => container.read(provider);
+  T resolve<T>(ProviderBase<T> provider) => container.resolve(provider);
 
   @override
-  T watch<T>(ProviderBase<T> provider) {
-    _watchedThisBuild.add(provider);
+  T observe<T>(ProviderBase<T> provider) {
+    _observedThisBuild.add(provider);
     _subscriptions.putIfAbsent(
       provider,
-      () => container.listen(provider, _onChanged),
+      () => container.observe(provider, _onChanged),
     );
-    return container.read(provider);
+    return container.resolve(provider);
   }
 
-  void beginBuild() => _watchedThisBuild = {};
+  void beginBuild() => _observedThisBuild = {};
 
   void endBuild() {
     final stale = _subscriptions.keys
-        .where((provider) => !_watchedThisBuild.contains(provider))
+        .where((provider) => !_observedThisBuild.contains(provider))
         .toList();
     for (final provider in stale) {
       _subscriptions.remove(provider)?.call();

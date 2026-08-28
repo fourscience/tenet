@@ -1,7 +1,7 @@
 /// Flutter bindings for `tenet_di`: [ProviderScope] owns a
 /// `ProviderContainer` for a widget subtree, and [ConsumerWidget]/
 /// [Consumer] rebuild automatically when the providers they
-/// [WidgetRef.watch] change.
+/// [WidgetRef.observe] change.
 ///
 /// ```dart
 /// void main() => runApp(const ProviderScope(child: MyApp()));
@@ -11,7 +11,7 @@
 ///
 ///   @override
 ///   Widget build(BuildContext context, WidgetRef ref) =>
-///       Text(ref.watch(greetingProvider));
+///       Text(ref.observe(greetingProvider));
 /// }
 /// ```
 library;

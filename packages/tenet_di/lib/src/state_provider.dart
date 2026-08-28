@@ -38,20 +38,20 @@ final class StateController<T> {
   }
 }
 
-/// A provider for a value that changes over time. Reading it — via
-/// `container.read`/`ref.watch`/`ref.read` — gives you its
+/// A provider for a value that changes over time. Resolving it — via
+/// `container.resolve`/`ref.observe`/`ref.resolve` — gives you its
 /// [StateController], not the raw value directly:
 ///
 /// ```dart
 /// final counterProvider = StateProvider<int>((ref) => 0);
 ///
-/// container.read(counterProvider).state;      // 0
-/// container.read(counterProvider).state = 5;  // notifies watchers
-/// container.read(counterProvider).update((n) => n + 1);
+/// container.resolve(counterProvider).state;      // 0
+/// container.resolve(counterProvider).state = 5;  // notifies observers
+/// container.resolve(counterProvider).update((n) => n + 1);
 /// ```
 ///
-/// Anything that `ref.watch`ed this provider — another provider's
-/// `create`, or a Flutter widget through `WidgetRef.watch` — is
+/// Anything that `ref.observe`d this provider — another provider's
+/// `create`, or a Flutter widget through `WidgetRef.observe` — is
 /// invalidated/rebuilt whenever `.state` is set to a new value.
 final class StateProvider<T> extends ProviderBase<StateController<T>> {
   /// Creates a provider whose initial state is computed by [_initial].

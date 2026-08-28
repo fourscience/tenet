@@ -6,10 +6,10 @@ import 'package:tenet_di_flutter/tenet_di_flutter.dart';
 // and `context.watch<T>()` on BuildContext. Two same-named extension
 // members on the same type are an unresolvable ambiguity at the *call
 // site* in Dart — this file wouldn't compile at all if
-// ReadProviderExtension were still named `read` instead of
-// `readProvider`. Redeclaring provider's exact shape here, in the same
+// ResolveProviderExtension put `read`/`watch` on BuildContext instead of
+// `resolve`. Redeclaring provider's exact shape here, in the same
 // library as tenet_di_flutter's own BuildContext extension, is the
-// regression test: if this file compiles and `context.readProvider(...)`
+// regression test: if this file compiles and `context.resolve(...)`
 // below resolves unambiguously, the two packages can coexist unprefixed.
 extension _FakeProviderPackageContext on BuildContext {
   T read<T>() => throw UnimplementedError('stands in for package:provider');
@@ -18,14 +18,14 @@ extension _FakeProviderPackageContext on BuildContext {
 
 final counterProvider = StateProvider<int>((ref) => 0);
 final doubledProvider =
-    Provider<int>((ref) => ref.watch(counterProvider).state * 2);
+    Provider<int>((ref) => ref.observe(counterProvider).state * 2);
 
 class CounterText extends ConsumerWidget {
   const CounterText({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final count = ref.watch(counterProvider).state;
+    final count = ref.observe(counterProvider).state;
     return Text('count: $count', textDirection: TextDirection.ltr);
   }
 }
@@ -38,7 +38,7 @@ class DoubledText extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     consumerWidgetBuilds++;
-    final doubled = ref.watch(doubledProvider);
+    final doubled = ref.observe(doubledProvider);
     return Text('doubled: $doubled', textDirection: TextDirection.ltr);
   }
 }
@@ -57,7 +57,7 @@ void main() {
     expect(find.text('count: 0'), findsOneWidget);
   });
 
-  testWidgets('ConsumerWidget rebuilds when a watched provider changes', (
+  testWidgets('ConsumerWidget rebuilds when an observed provider changes', (
     tester,
   ) async {
     late BuildContext capturedContext;
@@ -73,7 +73,7 @@ void main() {
     );
     expect(find.text('count: 0'), findsOneWidget);
 
-    capturedContext.readProvider(counterProvider).state = 5;
+    capturedContext.resolve(counterProvider).state = 5;
     await tester.pump();
 
     expect(find.text('count: 5'), findsOneWidget);
@@ -81,7 +81,7 @@ void main() {
   });
 
   testWidgets(
-    'a derived Provider rebuilds its own watchers when its dependency changes',
+    'a derived Provider rebuilds its own observers when its dependency changes',
     (tester) async {
       late BuildContext capturedContext;
       await tester.pumpWidget(
@@ -97,7 +97,7 @@ void main() {
       expect(find.text('doubled: 0'), findsOneWidget);
       expect(consumerWidgetBuilds, 1);
 
-      capturedContext.readProvider(counterProvider).state = 3;
+      capturedContext.resolve(counterProvider).state = 3;
       await tester.pump();
 
       expect(find.text('doubled: 6'), findsOneWidget);
@@ -110,7 +110,7 @@ void main() {
       ProviderScope(
         child: Consumer(
           builder: (context, ref, child) {
-            final count = ref.watch(counterProvider).state;
+            final count = ref.observe(counterProvider).state;
             return Text('inline: $count', textDirection: TextDirection.ltr);
           },
         ),
@@ -120,8 +120,8 @@ void main() {
   });
 
   testWidgets(
-    'readProvider resolves unambiguously alongside a package:provider-shaped '
-    'read/watch extension in the same file',
+    'context.resolve resolves unambiguously alongside a '
+    'package:provider-shaped read/watch extension in the same file',
     (tester) async {
       late BuildContext capturedContext;
       await tester.pumpWidget(
@@ -138,13 +138,13 @@ void main() {
       // Both extensions are in scope in this file; each name resolves to
       // exactly one declaration, so both compile and run without a
       // "defined in multiple extensions" error.
-      expect(capturedContext.readProvider(counterProvider).state, 0);
+      expect(capturedContext.resolve(counterProvider).state, 0);
       expect(() => capturedContext.read<int>(), throwsUnimplementedError);
       expect(() => capturedContext.watch<int>(), throwsUnimplementedError);
     },
   );
 
-  testWidgets('BuildContext.readProvider does not subscribe to changes', (
+  testWidgets('BuildContext.resolve does not subscribe to changes', (
     tester,
   ) async {
     var reads = 0;
@@ -155,7 +155,7 @@ void main() {
           builder: (context) {
             capturedContext = context;
             reads++;
-            context.readProvider(counterProvider); // one-off, no rebuild
+            context.resolve(counterProvider); // one-off, no rebuild
             return const SizedBox();
           },
         ),
@@ -163,10 +163,10 @@ void main() {
     );
     expect(reads, 1);
 
-    capturedContext.readProvider(counterProvider).state = 1;
+    capturedContext.resolve(counterProvider).state = 1;
     await tester.pump();
 
-    // The Builder above never watched the provider, so nothing should
+    // The Builder above never observed the provider, so nothing should
     // have triggered it to rebuild.
     expect(reads, 1);
   });
@@ -183,6 +183,53 @@ void main() {
     expect(find.text('count: 99'), findsOneWidget);
   });
 
+  testWidgets(
+    'ProviderScope(container: rootContainer) unifies widget-tree and '
+    'top-level state',
+    (tester) async {
+      addTearDown(resetRootContainer);
+      await tester.pumpWidget(
+        ProviderScope(container: rootContainer, child: const CounterText()),
+      );
+      expect(find.text('count: 0'), findsOneWidget);
+
+      // Mutated from plain Dart code, with no BuildContext in sight.
+      resolve(counterProvider).state = 7;
+      await tester.pump();
+
+      expect(find.text('count: 7'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'ProviderScope(container: ...) never disposes a container it was given',
+    (tester) async {
+      final container = ProviderContainer();
+      await tester.pumpWidget(
+        ProviderScope(container: container, child: const SizedBox()),
+      );
+      await tester.pumpWidget(const SizedBox()); // unmounts the scope
+
+      expect(() => container.resolve(counterProvider), returnsNormally);
+      container.dispose();
+    },
+  );
+
+  testWidgets('overrides alongside an explicit container asserts', (
+    tester,
+  ) async {
+    final container = ProviderContainer();
+    await tester.pumpWidget(
+      ProviderScope(
+        container: container,
+        overrides: [counterProvider.overrideWith((ref) => StateController(1))],
+        child: const SizedBox(),
+      ),
+    );
+    expect(tester.takeException(), isAssertionError);
+    container.dispose();
+  });
+
   testWidgets('disposing the ProviderScope disposes its container', (
     tester,
   ) async {
@@ -196,7 +243,7 @@ void main() {
       ProviderScope(
         child: Consumer(
           builder: (context, ref, child) {
-            ref.watch(provider);
+            ref.observe(provider);
             return const SizedBox();
           },
         ),

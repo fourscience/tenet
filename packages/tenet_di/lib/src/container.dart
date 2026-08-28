@@ -3,24 +3,28 @@ import 'ref.dart';
 
 /// The scope that actually owns provider instances: the only place a
 /// [ProviderBase.create] function ever runs. Everything is lazy — a
-/// provider isn't created until the first [read]/[watch]/[listen] of it —
-/// and cached from then on, so repeated reads of the same provider return
-/// the same instance until it's invalidated.
+/// provider isn't created until the first [resolve]/[observe]/[listen] of
+/// it — and cached from then on, so repeated resolutions of the same
+/// provider return the same instance until it's invalidated.
 ///
 /// ```dart
 /// final container = ProviderContainer();
-/// final repo = container.read(repositoryProvider);
+/// final repo = container.resolve(repositoryProvider);
 /// container.dispose(); // tears everything down when done
 /// ```
 ///
 /// For tests, override any provider's recipe without touching the
-/// providers a feature actually reads:
+/// providers a feature actually resolves:
 ///
 /// ```dart
 /// final container = ProviderContainer(
 ///   overrides: [repositoryProvider.overrideWithValue(FakeRepository())],
 /// );
 /// ```
+///
+/// Most code doesn't need to create its own container at all — see
+/// `rootContainer` (and the top-level `resolve`/`observe` sugar around
+/// it) in `root_container.dart` for a shared, lazily-created default.
 final class ProviderContainer {
   /// Creates a container, optionally replacing some providers' recipes
   /// with [overrides] (see [ProviderBase.overrideWithValue] and
@@ -37,24 +41,26 @@ final class ProviderContainer {
   final Set<ProviderBase> _creating = {};
   bool _disposed = false;
 
-  /// Reads [provider]'s current value, creating it (and every provider it
-  /// transitively watches) on first read. Does not subscribe to future
-  /// changes — see [listen] for that.
-  T read<T>(ProviderBase<T> provider) => _resolve(provider, watcher: null);
+  /// Resolves [provider]'s current value, creating it (and every
+  /// provider it transitively observes) on first resolution. Does not
+  /// subscribe to future changes — see [observe] for that.
+  T resolve<T>(ProviderBase<T> provider) => _lookup(provider, watcher: null);
 
   /// Subscribes [onChange] to [provider]: called whenever its value
-  /// changes (a watched `StateProvider`'s state was set, or [provider]
-  /// itself — or something it transitively watches — was [invalidate]d).
+  /// changes (an observed `StateProvider`'s state was set, or [provider]
+  /// itself — or something it transitively observes — was [invalidate]d).
   /// Returns a function that cancels the subscription.
   ///
-  /// [onChange] receives no arguments; call [read] inside it for the
+  /// [onChange] receives no arguments; call [resolve] inside it for the
   /// fresh value. This is the low-level primitive the Flutter bindings
   /// (`tenet_di_flutter`'s `ConsumerWidget`/`Consumer`) build on; most
   /// application code should prefer those over calling this directly.
-  void Function() listen<T>(
-      ProviderBase<T> provider, void Function() onChange) {
+  void Function() observe<T>(
+    ProviderBase<T> provider,
+    void Function() onChange,
+  ) {
     _checkNotDisposed();
-    read(provider); // ensure it exists before anyone can be notified about it
+    resolve(provider); // ensure it exists before anyone is notified about it
     final listeners = _externalListeners.putIfAbsent(provider, () => {});
     listeners.add(onChange);
     return () => listeners.remove(onChange);
@@ -62,7 +68,7 @@ final class ProviderContainer {
 
   /// Tears down [provider]'s current value — runs its `ref.onDispose`
   /// callbacks and notifies listeners — then cascades to every provider
-  /// that `ref.watch`ed it, recursively. The next [read] of any
+  /// that `ref.observe`d it, recursively. The next [resolve] of any
   /// invalidated provider recreates it from scratch.
   void invalidate(ProviderBase provider) {
     _checkNotDisposed();
@@ -86,7 +92,7 @@ final class ProviderContainer {
 
   // `_Node` is deliberately NOT generic (see its doc comment) — `T` here
   // is only ever as reliable as the caller's own inference, and a call
-  // site with a weak expected type (e.g. `print(container.read(p))`,
+  // site with a weak expected type (e.g. `print(container.resolve(p))`,
   // where `print` takes `Object?`) can silently widen `T` past what the
   // provider actually declares. Keying the cache on a `T`-typed node
   // would then crash a *later, unrelated* call once it inferred `T`
@@ -95,7 +101,7 @@ final class ProviderContainer {
   // that: it succeeds as long as the value truly is a `T`, which
   // `provider.create`'s own return type already guarantees regardless of
   // what this particular call's `T` resolved to.
-  T _resolve<T>(ProviderBase<T> provider, {ProviderBase? watcher}) {
+  T _lookup<T>(ProviderBase<T> provider, {ProviderBase? watcher}) {
     _checkNotDisposed();
     var node = _nodes[provider];
     if (node == null) {
@@ -159,8 +165,8 @@ final class ProviderContainer {
 }
 
 /// A cached provider value, its cleanup callbacks, and the set of other
-/// providers that `ref.watch`ed it. Not generic on purpose — see the
-/// comment on [ProviderContainer._resolve] for why.
+/// providers that `ref.observe`d it. Not generic on purpose — see the
+/// comment on [ProviderContainer._lookup] for why.
 final class _Node {
   _Node(this.value, this.disposers);
   final Object? value;
@@ -176,11 +182,11 @@ final class _RefImpl implements Ref {
   final List<void Function()> disposers = [];
 
   @override
-  T read<T>(ProviderBase<T> provider) => _container._resolve(provider);
+  T resolve<T>(ProviderBase<T> provider) => _container._lookup(provider);
 
   @override
-  T watch<T>(ProviderBase<T> provider) =>
-      _container._resolve(provider, watcher: _owner);
+  T observe<T>(ProviderBase<T> provider) =>
+      _container._lookup(provider, watcher: _owner);
 
   @override
   void onDispose(void Function() callback) => disposers.add(callback);

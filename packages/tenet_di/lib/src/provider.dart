@@ -1,15 +1,16 @@
 import 'ref.dart';
 
 /// A declarative recipe for building a value of type [T] — the identity
-/// token consumers pass to [container.read]/[container.watch]/`ref.watch`
-/// wherever they need [T]. A provider is declared once, as a top-level
-/// `final`, and the *provider instance itself* (not its type) is the
-/// cache key a [ProviderContainer] uses — two providers built with equal
-/// `create` functions are still two independent entries.
+/// token consumers pass to `container.resolve`/`container.observe`/
+/// `ref.observe` wherever they need [T]. A provider is declared once, as
+/// a top-level `final`, and the *provider instance itself* (not its
+/// type) is the cache key a [ProviderContainer] uses — two providers
+/// built with equal `create` functions are still two independent
+/// entries.
 ///
 /// Providers are lazy: [create] doesn't run until something actually
-/// reads the provider, and its result is cached in the container from
-/// then on (until invalidated).
+/// resolves the provider, and its result is cached in the container
+/// from then on (until invalidated).
 abstract class ProviderBase<T> {
   /// Creates a provider, optionally named for debugging/error messages.
   const ProviderBase({this.name});
