@@ -12,7 +12,7 @@ class Clock {
 
 final clockProvider = Provider<Clock>((ref) => Clock(), name: 'clock');
 
-/// A dependency that depends on another provider via `ref.watch`.
+/// A dependency that depends on another provider via `ref.observe`.
 class Greeter {
   Greeter(this._clock);
   final Clock _clock;
@@ -21,42 +21,42 @@ class Greeter {
 }
 
 final greeterProvider = Provider<Greeter>(
-  (ref) => Greeter(ref.watch(clockProvider)),
+  (ref) => Greeter(ref.observe(clockProvider)),
   name: 'greeter',
 );
 
-/// A mutable, watchable dependency — StateProvider, not Provider.
+/// A mutable, observable dependency — StateProvider, not Provider.
 final usernameProvider = StateProvider<String>(
   (ref) => 'guest',
   name: 'username',
 );
 
 /// A provider *derived* from a StateProvider: recomputed automatically
-/// whenever usernameProvider's state changes, because it `ref.watch`ed it.
+/// whenever usernameProvider's state changes, because it `ref.observe`d it.
 final welcomeMessageProvider = Provider<String>((ref) {
-  final greeter = ref.watch(greeterProvider);
-  final username = ref.watch(usernameProvider).state;
+  final greeter = ref.observe(greeterProvider);
+  final username = ref.observe(usernameProvider).state;
   return greeter.greet(username);
 }, name: 'welcomeMessage');
 
 void main() {
   final container = ProviderContainer();
 
-  print(container.read(welcomeMessageProvider));
+  print(container.resolve(welcomeMessageProvider));
 
   // Subscribe to the derived provider — no manual re-wiring needed.
-  final unsubscribe = container.listen(welcomeMessageProvider, () {
-    print('(changed) ${container.read(welcomeMessageProvider)}');
+  final unsubscribe = container.observe(welcomeMessageProvider, () {
+    print('(changed) ${container.resolve(welcomeMessageProvider)}');
   });
 
   // Mutating the StateProvider automatically invalidates and recomputes
-  // welcomeMessageProvider, which notifies the listener above.
-  container.read(usernameProvider).state = 'ada';
-  container.read(usernameProvider).state = 'grace';
-  container.read(usernameProvider).state = 'grace'; // no-op: same value
+  // welcomeMessageProvider, which notifies the observer above.
+  container.resolve(usernameProvider).state = 'ada';
+  container.resolve(usernameProvider).state = 'grace';
+  container.resolve(usernameProvider).state = 'grace'; // no-op: same value
 
   unsubscribe();
-  container.read(usernameProvider).state = 'ignored-after-unsubscribe';
+  container.resolve(usernameProvider).state = 'ignored-after-unsubscribe';
 
   // Overrides — typically for tests, but usable anywhere a container is
   // constructed — swap a provider's recipe without touching the
@@ -69,8 +69,13 @@ void main() {
     ],
   );
   print('\nWith an overridden clock: '
-      '${testContainer.read(welcomeMessageProvider)}');
+      '${testContainer.resolve(welcomeMessageProvider)}');
 
   container.dispose();
   testContainer.dispose();
+
+  // No container of your own at hand — no Ref, no WidgetRef, no
+  // BuildContext? The top-level resolve/observe read through
+  // rootContainer, a shared default created lazily on first use.
+  print('\nVia the root container: ${resolve(welcomeMessageProvider)}');
 }

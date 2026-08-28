@@ -6,7 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:tenet_di_flutter/tenet_di_flutter.dart';
 
-/// A mutable, watchable dependency.
+/// A mutable, observable dependency.
 final counterProvider = StateProvider<int>((ref) => 0, name: 'counter');
 
 /// A plain dependency with no state of its own.
@@ -17,11 +17,11 @@ class Greeter {
 
 final greeterProvider = Provider<Greeter>((ref) => Greeter(), name: 'greeter');
 
-/// Derived from both providers above via `ref.watch` — recomputed, and
-/// every widget watching it rebuilt, whenever `counterProvider` changes.
+/// Derived from both providers above via `ref.observe` — recomputed, and
+/// every widget observing it rebuilt, whenever `counterProvider` changes.
 final messageProvider = Provider<String>((ref) {
-  final greeter = ref.watch(greeterProvider);
-  final count = ref.watch(counterProvider).state;
+  final greeter = ref.observe(greeterProvider);
+  final count = ref.observe(counterProvider).state;
   return greeter.greet(count);
 }, name: 'message');
 
@@ -45,20 +45,21 @@ class CounterPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final count = ref.watch(counterProvider).state;
+    final count = ref.observe(counterProvider).state;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text('Count: $count', style: const TextStyle(fontSize: 32)),
         const SizedBox(height: 16),
-        // A separate widget, watching a *derived* provider — it rebuilds
+        // A separate widget, observing a *derived* provider — it rebuilds
         // too, even though it never touches counterProvider directly.
         const MessageText(),
         const SizedBox(height: 24),
         ElevatedButton(
-          // context.read: a one-off write, no subscription needed for a
-          // button press.
-          onPressed: () => context.read(counterProvider).update((n) => n + 1),
+          // context.resolve: a one-off write, no subscription needed
+          // for a button press.
+          onPressed: () =>
+              context.resolve(counterProvider).update((n) => n + 1),
           child: const Text('Increment'),
         ),
       ],
@@ -71,7 +72,7 @@ class MessageText extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final message = ref.watch(messageProvider);
+    final message = ref.observe(messageProvider);
     return Text(message, style: const TextStyle(fontStyle: FontStyle.italic));
   }
 }
