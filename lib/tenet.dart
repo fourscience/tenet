@@ -1,4 +1,4 @@
-/// FlowState — a time-aware, effect-separated state management library.
+/// Tenet — a time-aware, effect-separated state management library.
 ///
 /// Core mental model (one sentence):
 ///   "State is now, Flows change it purely, Ripples fetch it asynchronously,
@@ -18,7 +18,7 @@
 ///          what they need.
 ///   * DIP: effects depend on the abstract [StateEmitter], not concrete
 ///          APIs.
-library flow_state;
+library tenet;
 
 export 'src/combinators.dart';
 export 'src/core.dart';

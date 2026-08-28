@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import '../../flow_state.dart';
+import '../../tenet.dart';
 
 /// A test harness for a [Feature]: instantiates its [Store], records every
 /// transaction, captures Echo invocations, and exposes helpers for fluent

@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:flow_state/flow_state.dart';
-import 'package:flow_state/flow_state_testing.dart';
+import 'package:tenet/tenet.dart';
+import 'package:tenet/tenet_testing.dart';
 import 'package:test/test.dart';
 
 // -- Test domain -------------------------------------------------------------
