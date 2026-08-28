@@ -114,8 +114,8 @@ class CartFeature extends Feature<CartState> {
   @override
   void registerFlows(FlowRegistry<CartState> flows) {
     flows.flow<AddItem>(
-      'addItem',
       (state, event) => CartState([...state.items, event.item]),
+      name: 'addItem',
     );
   }
 }
@@ -146,12 +146,16 @@ hot-reload friendly. Register one per event type in
 
 ```dart
 flows.flow<RemoveItem>(
-  'removeItem',
   (state, event) => state.copyWith(
     items: state.items.where((i) => i != event.id).toList(),
   ),
+  name: 'removeItem',
 );
 ```
+
+`name` becomes the ledger transaction's `source` — see
+[The transaction ledger](#the-transaction-ledger) — and defaults to `E`'s
+type name (`'RemoveItem'` here) if you don't pass one.
 
 Dispatch synchronously through the `Store`:
 
@@ -212,10 +216,14 @@ exposes a `state` getter and nothing else — there is no write API for an
 Echo to reach for, by construction:
 
 ```dart
-echos.echo<CheckoutRequested>('analytics', (event, lens) {
+echos.echo<CheckoutRequested>((event, lens) {
   analytics.log('checkout_requested', {'status': lens.state.status});
-});
+}, name: 'analytics');
 ```
+
+`name` is optional here too — a label for readability, defaulting to
+`E`'s type name — and, unlike a Flow's, isn't consumed anywhere else
+yet.
 
 Echoes fire whenever their event type is `dispatch`ed — whether or not
 that type also has a Flow.
@@ -355,9 +363,9 @@ built-in `EventCommitted(source)` to Echoes, so "something in my state
 changed" never needs per-source wiring:
 
 ```dart
-echos.echo<EventCommitted>('devtools', (event, lens) {
+echos.echo<EventCommitted>((event, lens) {
   log('commit from ${event.source} -> ${lens.state}');
-});
+}, name: 'devtools');
 ```
 
 A full, runnable walkthrough — Intent, two Commands (one executed

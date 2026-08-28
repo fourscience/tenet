@@ -1,3 +1,15 @@
+## 0.3.0
+
+- **Breaking:** `FlowRegistry.flow` and `EchoRegistry.echo` now take the
+  callback as the first positional argument and `name` as an optional
+  named argument — `flows.flow<E>(name, callback)` is now
+  `flows.flow<E>(callback, {name})`, and likewise for `echos.echo`. Both
+  `name`s default to `E`'s type name when omitted, so the common case no
+  longer needs a raw string at all. This matches the `Provider<T>(create,
+  {name})` convention already used by `tenet_di`. A Flow's `name` is still
+  consequential — it becomes the ledger transaction's `Transaction.source`
+  — while an Echo's `name` remains a readability label only.
+
 ## 0.2.0
 
 - Added an optional Intent/Command/Event dispatch taxonomy, additive

@@ -72,21 +72,21 @@ class CartFeature extends Feature<CartState> {
   @override
   void registerFlows(FlowRegistry<CartState> flows) {
     flows.flow<AddItem>(
-      'addItem',
       (s, e) => s.copyWith(items: [...s.items, e.item]),
+      name: 'addItem',
     );
     flows.flow<RemoveItem>(
-      'removeItem',
       (s, e) => s.copyWith(items: s.items.where((i) => i != e.id).toList()),
+      name: 'removeItem',
     );
   }
 
   @override
   void registerEchos(EchoRegistry<CartState> echos) {
-    echos.echo<CheckoutRequested>('analytics', (event, lens) {
+    echos.echo<CheckoutRequested>((event, lens) {
       // Read-only proof: lens.state accessible, no write API exists.
       harness?.recordEcho('analytics', lens.state.status);
-    });
+    }, name: 'analytics');
   }
 
   // Test back-reference (set by tests) so the Echo can record calls.

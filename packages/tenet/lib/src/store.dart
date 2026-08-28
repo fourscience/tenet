@@ -53,14 +53,19 @@ abstract class Feature<S> {
 /// authors never see this; Flow authors never see Echo/Intent
 /// registration).
 abstract class FlowRegistry<S> {
-  /// Registers a Flow under [name].
-  void flow<E>(String name, Flow<S, E> flow);
+  /// Registers [flow] for events of type [E]. [name] becomes the ledger
+  /// transaction's `source` (see [Transaction.source]) — pass one when
+  /// `$E` on its own wouldn't read well there (e.g. `name: 'addItem'`
+  /// instead of the default `'AddItem'`). Defaults to `E`'s type name.
+  void flow<E>(Flow<S, E> flow, {String? name});
 }
 
 /// Registration surface for Echoes.
 abstract class EchoRegistry<S> {
-  /// Registers an Echo that reacts to events of type [E].
-  void echo<E>(String name, EchoBody<S, E> body);
+  /// Registers [body] as an Echo that reacts to events of type [E].
+  /// [name] is a label for readability at the call site and in future
+  /// debugging output; defaults to `E`'s type name.
+  void echo<E>(EchoBody<S, E> body, {String? name});
 }
 
 /// Registration surface for [Intent] handlers — a third registry,
@@ -122,8 +127,11 @@ final class _FlowRegistryImpl<S> implements FlowRegistry<S> {
   final Map<Type, _FlowEntry<S>> _byType = {};
 
   @override
-  void flow<E>(String name, Flow<S, E> flow) {
-    _byType[E] = _FlowEntry<S>(name, (state, event) => flow(state, event as E));
+  void flow<E>(Flow<S, E> flow, {String? name}) {
+    _byType[E] = _FlowEntry<S>(
+      name ?? E.toString(),
+      (state, event) => flow(state, event as E),
+    );
   }
 }
 
@@ -131,8 +139,8 @@ final class _EchoRegistryImpl<S> implements EchoRegistry<S> {
   final List<_EchoEntry<S, Object?>> _entries = [];
 
   @override
-  void echo<E>(String name, EchoBody<S, E> body) {
-    _entries.add(_EchoEntry<S, E>(name, body));
+  void echo<E>(EchoBody<S, E> body, {String? name}) {
+    _entries.add(_EchoEntry<S, E>(name ?? E.toString(), body));
   }
 }
 

@@ -109,15 +109,15 @@ class SwitchFeature extends Feature<SwitchState> {
 
   @override
   void registerEchos(EchoRegistry<SwitchState> echos) {
-    echos.echo<SwitchToggled>('toggled', (event, lens) {
+    echos.echo<SwitchToggled>((event, lens) {
       harness?.recordEcho('toggled', event.on);
-    });
-    echos.echo<EventCommitted>('committed', (event, lens) {
+    }, name: 'toggled');
+    echos.echo<EventCommitted>((event, lens) {
       harness?.recordEcho('committed', event.source);
-    });
-    echos.echo<OtherEvent>('other', (event, lens) {
+    }, name: 'committed');
+    echos.echo<OtherEvent>((event, lens) {
       harness?.recordEcho('other', null);
-    });
+    }, name: 'other');
   }
 
   // Test back-reference (set by tests) so Echoes can record calls.
