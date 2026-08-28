@@ -56,19 +56,19 @@ class CounterFeature extends Feature<CounterState> {
   @override
   void registerFlows(FlowRegistry<CounterState> flows) {
     flows.flow<Increment>(
-      'increment',
       (state, event) => state.copyWith(value: state.value + event.amount),
+      name: 'increment',
     );
   }
 
   @override
   void registerEchos(EchoRegistry<CounterState> echos) {
-    echos.echo<Increment>('audit', (event, lens) {
+    echos.echo<Increment>((event, lens) {
       print('[audit] +${event.amount} -> ${lens.state.value}');
-    });
-    echos.echo<SyncRequested>('audit', (event, lens) {
+    }, name: 'audit');
+    echos.echo<SyncRequested>((event, lens) {
       print('[audit] sync requested for value ${event.value}');
-    });
+    }, name: 'audit');
   }
 }
 

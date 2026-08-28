@@ -95,12 +95,12 @@ class SessionFeature extends Feature<SessionState> {
 
   @override
   void registerEchos(EchoRegistry<SessionState> echos) {
-    echos.echo<SessionStarted>('audit', (event, lens) {
+    echos.echo<SessionStarted>((event, lens) {
       print('[audit] ${event.username} signed in -> ${lens.state}');
-    });
-    echos.echo<EventCommitted>('audit', (event, lens) {
+    }, name: 'audit');
+    echos.echo<EventCommitted>((event, lens) {
       print('[audit] commit from "${event.source}" -> ${lens.state}');
-    });
+    }, name: 'audit');
   }
 }
 
