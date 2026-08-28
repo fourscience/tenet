@@ -1,0 +1,66 @@
+# Publishes tenet_di_flutter to pub.dev. See publish.yaml for the
+# pure-Dart packages (tenet, tenet_result, tenet_di) — same idea, just
+# using the Flutter SDK/toolchain instead of the plain Dart one, since
+# `flutter analyze`/`flutter test`/`flutter pub publish` are needed for a
+# package with a Flutter SDK dependency.
+#
+# Trigger: run manually from the Actions tab (or `gh workflow run
+# publish-flutter.yaml`). The package's pubspec.yaml `version:` must
+# already be bumped and CHANGELOG.md must already have an entry for it.
+#
+# Authentication: see publish.yaml's header comment — same
+# `PUB_CREDENTIALS` repository secret, same one-time setup.
+name: Publish tenet_di_flutter
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish tenet_di_flutter
+    runs-on: ubuntu-latest
+    # Configure this environment under Settings -> Environments to require
+    # manual approval before a publish runs, if desired.
+    environment: pub.dev
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install workspace dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: packages/tenet_di_flutter
+        run: flutter analyze
+
+      - name: Run tests
+        working-directory: packages/tenet_di_flutter
+        run: flutter test
+
+      - name: Install pub credentials
+        env:
+          PUB_CREDENTIALS: ${{ secrets.PUB_CREDENTIALS }}
+        run: |
+          set -euo pipefail
+          if [ -z "$PUB_CREDENTIALS" ]; then
+            echo "::error::The PUB_CREDENTIALS secret is not set — see publish.yaml's header comment for setup steps." >&2
+            exit 1
+          fi
+          mkdir -p ~/.config/dart
+          printf '%s' "$PUB_CREDENTIALS" > ~/.config/dart/pub-credentials.json
+
+      - name: Dry run
+        working-directory: packages/tenet_di_flutter
+        run: flutter pub publish --dry-run
+
+      - name: Publish
+        working-directory: packages/tenet_di_flutter
+        run: flutter pub publish --force

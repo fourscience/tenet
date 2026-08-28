@@ -11,33 +11,68 @@ permissions:
 
 jobs:
   test:
-    name: Analyze & test
+    name: Analyze & test all packages
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Dart
-        uses: dart-lang/setup-dart@v1
+      # The workspace includes tenet_di_flutter, which depends on the
+      # Flutter SDK — resolving the workspace at all (even just for the
+      # three pure-Dart packages) requires Flutter, since pub workspaces
+      # resolve every member together. Plain `dart analyze`/`dart run`
+      # work fine afterward against the already-resolved package graph,
+      # but `dart test` and `dart pub publish` each re-verify the whole
+      # workspace's resolution themselves and fail the same way `dart pub
+      # get` would — so those two specifically go through `flutter pub`
+      # below, even for the pure-Dart packages.
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          sdk: stable
+          channel: stable
 
-      - name: Install dependencies
-        run: dart pub get
+      - name: Install workspace dependencies
+        run: flutter pub get
 
-      - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed .
+      - name: Verify formatting (whole packages/ tree)
+        run: dart format --output=none --set-exit-if-changed packages
 
-      - name: Analyze
-        run: dart analyze --fatal-infos
-
-      - name: Run tests
-        run: dart test
-
-      - name: Run examples
+      - name: Analyze & test tenet, tenet_result, tenet_di
         run: |
-          dart run example/tenet_example.dart
-          dart run example/intent_command_event_example.dart
+          set -e
+          for pkg in tenet tenet_result tenet_di; do
+            echo "::group::$pkg"
+            (cd "packages/$pkg" && dart analyze --fatal-infos && flutter pub run test)
+            echo "::endgroup::"
+          done
 
-      - name: Verify the package is publish-ready
-        run: dart pub publish --dry-run
+      - name: Run tenet/tenet_result/tenet_di examples
+        run: |
+          set -e
+          (cd packages/tenet && dart run example/tenet_example.dart)
+          (cd packages/tenet && dart run example/intent_command_event_example.dart)
+          (cd packages/tenet_result && dart run example/tenet_result_example.dart)
+          (cd packages/tenet_di && dart run example/tenet_di_example.dart)
+
+      - name: Verify tenet, tenet_result, tenet_di are publish-ready
+        run: |
+          set -e
+          for pkg in tenet tenet_result tenet_di; do
+            (cd "packages/$pkg" && flutter pub publish --dry-run)
+          done
+
+      - name: Analyze & test tenet_di_flutter
+        working-directory: packages/tenet_di_flutter
+        run: |
+          flutter analyze
+          flutter test
+
+      - name: Verify tenet_di_flutter is publish-ready
+        working-directory: packages/tenet_di_flutter
+        run: flutter pub publish --dry-run
+
+      - name: Analyze tenet_di_flutter's example app
+        working-directory: packages/tenet_di_flutter/example
+        run: |
+          flutter pub get
+          flutter analyze
