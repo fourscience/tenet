@@ -1,0 +1,26 @@
+name: tenet_di_flutter_example
+description: Example Flutter app for tenet_di_flutter.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.6.0
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  tenet_di_flutter:
+    path: ../
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+# tenet_di isn't published yet, so point the example at the workspace
+# copy directly. Once tenet_di is on pub.dev, tenet_di_flutter's own
+# pubspec constraint on it is enough and this override can go away.
+dependency_overrides:
+  tenet_di:
+    path: ../../tenet_di

@@ -1,16 +1,11 @@
-name: tenet
-description: >-
-  A time-aware, effect-separated state management library for Dart and
-  Flutter. State is now, Flows change it purely, Ripples fetch it
-  asynchronously, Echoes react to it externally.
-version: 0.2.0
-homepage: https://github.com/fourscience/tenet
-repository: https://github.com/fourscience/tenet
-issue_tracker: https://github.com/fourscience/tenet/issues
+name: tenet_workspace
+publish_to: none
 
 environment:
-  sdk: ^3.0.0
+  sdk: ^3.6.0
 
-dev_dependencies:
-  lints: ^3.0.0
-  test: ^1.25.0
+workspace:
+  - packages/tenet
+  - packages/tenet_result
+  - packages/tenet_di
+  - packages/tenet_di_flutter

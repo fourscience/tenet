@@ -1,0 +1,26 @@
+name: tenet_di_flutter
+description: >-
+  Flutter bindings for tenet_di: ProviderScope owns the container for a
+  widget subtree, and ConsumerWidget/Consumer rebuild automatically when
+  the providers they watch change — a minimal, Riverpod/Refena-flavored
+  developer experience.
+version: 0.1.0
+homepage: https://github.com/fourscience/tenet/tree/main/packages/tenet_di_flutter
+repository: https://github.com/fourscience/tenet
+issue_tracker: https://github.com/fourscience/tenet/issues
+
+environment:
+  sdk: ^3.6.0
+  flutter: '>=3.19.0'
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  tenet_di: ^0.1.0
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter

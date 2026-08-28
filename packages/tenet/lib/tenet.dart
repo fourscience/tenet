@@ -18,7 +18,7 @@
 ///          what they need.
 ///   * DIP: effects depend on the abstract [StateEmitter], not concrete
 ///          APIs.
-library tenet;
+library;
 
 export 'src/combinators.dart';
 export 'src/core.dart';
