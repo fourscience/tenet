@@ -56,9 +56,10 @@ class CounterPage extends ConsumerWidget {
         const MessageText(),
         const SizedBox(height: 24),
         ElevatedButton(
-          // context.read: a one-off write, no subscription needed for a
-          // button press.
-          onPressed: () => context.read(counterProvider).update((n) => n + 1),
+          // context.readProvider: a one-off write, no subscription needed
+          // for a button press.
+          onPressed: () =>
+              context.readProvider(counterProvider).update((n) => n + 1),
           child: const Text('Increment'),
         ),
       ],

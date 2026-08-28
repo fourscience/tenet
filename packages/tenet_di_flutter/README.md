@@ -78,14 +78,22 @@ Consumer(
 
 ```dart
 ElevatedButton(
-  onPressed: () => context.read(counterProvider).update((n) => n + 1),
+  onPressed: () => context.readProvider(counterProvider).update((n) => n + 1),
   child: const Text('Increment'),
 )
 ```
 
-`context.read` is for one-off reads/writes outside `build` — button
-handlers, `initState`, anywhere a subscription would be pointless. It
-never causes a rebuild by itself.
+`context.readProvider` is for one-off reads/writes outside `build` —
+button handlers, `initState`, anywhere a subscription would be
+pointless. It never causes a rebuild by itself.
+
+It's `readProvider`, not `read`: `package:provider` already defines
+`context.read<T>()`/`context.watch<T>()`, and Dart treats two
+same-named extension members on the same type as an unresolvable
+ambiguity, not something an import prefix can quietly resolve the way a
+plain class-name clash can. Naming this differently means you can add
+`tenet_di_flutter` to a codebase that already uses `package:provider`,
+unprefixed, and migrate one widget at a time instead of all at once.
 
 ### 4. Testing
 
