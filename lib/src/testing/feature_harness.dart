@@ -42,6 +42,17 @@ final class FeatureHarness<S> {
   /// Dispatches a sync event through the registered Flow for [E].
   void dispatch<E>(E event) => store.dispatch<E>(event);
 
+  /// Sends an [Intent] through the registered [IntentHandler] for its
+  /// type.
+  void send(Intent intent) => store.send(intent);
+
+  /// Executes a [Command] through the pure write path.
+  void execute(Command<S> command, {String? source}) =>
+      store.execute(command, source: source);
+
+  /// Broadcasts an [Event] to Echoes.
+  void publish<E extends Event>(E event) => store.publish<E>(event);
+
   /// Records that an Echo named [name] received [event]; used with
   /// [echoCalls] to assert Echo wiring without asserting internals.
   void recordEcho(String name, Object? event) =>

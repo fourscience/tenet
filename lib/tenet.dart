@@ -22,6 +22,7 @@ library tenet;
 
 export 'src/combinators.dart';
 export 'src/core.dart';
+export 'src/dispatch.dart';
 export 'src/flow_scope.dart';
 export 'src/store.dart';
 export 'src/transaction.dart';

@@ -34,8 +34,10 @@ jobs:
       - name: Run tests
         run: dart test
 
-      - name: Run example
-        run: dart run example/tenet_example.dart
+      - name: Run examples
+        run: |
+          dart run example/tenet_example.dart
+          dart run example/intent_command_event_example.dart
 
       - name: Verify the package is publish-ready
         run: dart pub publish --dry-run
