@@ -12,11 +12,12 @@ one [Dart pub workspace](https://dart.dev/tools/pub/workspaces):
 | [`tenet_result`](packages/tenet_result) | A minimal `Result<T, E>` type: explicit, typed success/failure instead of throwing. | No |
 | [`tenet_di`](packages/tenet_di) | A minimal, Riverpod/Refena-flavored dependency injection library — declarative providers, a lazy caching container, an invalidation/notification graph, testing overrides. | No |
 | [`tenet_di_flutter`](packages/tenet_di_flutter) | Flutter bindings for `tenet_di`: `ProviderScope`, `ConsumerWidget`, `Consumer`. | Yes |
+| [`tenet_rxdart`](packages/tenet_rxdart) | rxdart interop for `tenet`: rxdart-backed throttle/debounce/retry Ripple combinators, plus driving a `Store` from a `Stream<E>` pipeline. | No |
 
 Each package is independently versioned and publishable, has its own
 `CHANGELOG.md`/`LICENSE`/tests/example, and has no dependency on any
-other package here — pick the ones you need. Follow the link to a
-package above for its full README.
+other package here except the one it explicitly binds to (`tenet_di_flutter` → `tenet_di`, `tenet_rxdart` → `tenet`) — pick the
+ones you need. Follow the link to a package above for its full README.
 
 ## Repository layout
 
@@ -26,6 +27,7 @@ packages/
   tenet_result/         # Result<T, E>
   tenet_di/              # DI core (pure Dart)
   tenet_di_flutter/       # DI Flutter bindings
+  tenet_rxdart/            # rxdart interop for tenet
 ```
 
 Every package lists `resolution: workspace` in its `pubspec.yaml` and is
@@ -36,7 +38,7 @@ by name without a manual `path:` override.
 ## Development
 
 Resolving the workspace needs the **Flutter SDK on `PATH`**, even though
-three of the four packages have no Flutter dependency of their own: pub
+four of the five packages have no Flutter dependency of their own: pub
 workspaces resolve every member together, and `tenet_di_flutter` (one
 member) depends on the Flutter SDK, so plain `dart pub get` at the root
 fails outright — `flutter pub get` is a superset that handles it.
@@ -61,8 +63,8 @@ for every package, in that order, on each push and pull request.
 Each package publishes independently to pub.dev via a manually-triggered
 workflow:
 
-- `.github/workflows/publish.yaml` — `tenet`, `tenet_result`, `tenet_di`
-  (pick one from the workflow's `package` input).
+- `.github/workflows/publish.yaml` — `tenet`, `tenet_result`, `tenet_di`,
+  `tenet_rxdart` (pick one from the workflow's `package` input).
 - `.github/workflows/publish-flutter.yaml` — `tenet_di_flutter`.
 
 Both authenticate via a `PUB_CREDENTIALS` repository secret — see either
