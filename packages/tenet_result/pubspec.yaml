@@ -3,7 +3,7 @@ description: >-
   A minimal, dependency-free Result<T, E> type for Dart — explicit,
   typed success/failure instead of throwing, with map/flatMap/match and
   guard helpers for adapting exception-throwing code.
-version: 0.1.0
+version: 0.2.0
 homepage: https://github.com/fourscience/tenet/tree/main/packages/tenet_result
 repository: https://github.com/fourscience/tenet
 issue_tracker: https://github.com/fourscience/tenet/issues

@@ -132,6 +132,13 @@ sealed class Result<T, E> {
 }
 
 /// A successful [Result], holding a [value].
+///
+/// Two [Ok]s are equal when their values are, regardless of how each
+/// one's type arguments were inferred: `Ok<int, String>(1)` equals
+/// `Ok<int, dynamic>(1)`. Comparing type arguments instead would make
+/// `==` asymmetric — generics are covariant, so `Ok<int, String>` is an
+/// `Ok<int, dynamic>` but not the reverse — and an asymmetric `==` breaks
+/// `Set`/`Map` membership in ways that depend on insertion order.
 final class Ok<T, E> extends Result<T, E> {
   /// The success value.
   final T value;
@@ -140,7 +147,7 @@ final class Ok<T, E> extends Result<T, E> {
   const Ok(this.value);
 
   @override
-  bool operator ==(Object other) => other is Ok<T, E> && other.value == value;
+  bool operator ==(Object other) => other is Ok && other.value == value;
 
   @override
   int get hashCode => Object.hash(Ok, value);
@@ -150,6 +157,10 @@ final class Ok<T, E> extends Result<T, E> {
 }
 
 /// A failed [Result], holding an [error].
+///
+/// Two [Err]s are equal when their errors are, regardless of type
+/// arguments — see [Ok] for why the type arguments are deliberately left
+/// out of the comparison.
 final class Err<T, E> extends Result<T, E> {
   /// The error.
   final E error;
@@ -158,7 +169,7 @@ final class Err<T, E> extends Result<T, E> {
   const Err(this.error);
 
   @override
-  bool operator ==(Object other) => other is Err<T, E> && other.error == error;
+  bool operator ==(Object other) => other is Err && other.error == error;
 
   @override
   int get hashCode => Object.hash(Err, error);
