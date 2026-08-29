@@ -12,7 +12,7 @@
 ///
 /// Design principles honored:
 ///   * SRP: each class owns exactly one concern.
-///   * OCP: behaviors (debounce, retry, timeout) compose via wrappers.
+///   * OCP: behaviors (throttle, retry, timeout) compose via wrappers.
 ///   * LSP: all Flow/Ripple/Echo variants are substitutable.
 ///   * ISP: narrow interfaces (Flow, Ripple, Echo) — consumers see only
 ///          what they need.

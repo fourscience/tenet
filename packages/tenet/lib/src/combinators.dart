@@ -3,7 +3,7 @@ import 'dart:async';
 import 'core.dart';
 import 'flow_scope.dart';
 
-/// Composable behavior wrappers for Ripples: retry, timeout, debounce.
+/// Composable behavior wrappers for Ripples: retry, timeout, throttle.
 /// Each is a pure decorator of [RippleBody] — open/closed principle in
 /// action: new behaviors require no changes to `Store` or `Feature`.
 
@@ -50,9 +50,16 @@ RippleBody<S, E> withTimeout<S, E>(RippleBody<S, E> body, Duration limit) {
   return (event, emit) => body(event, emit).timeout(limit);
 }
 
-/// Ignores rapid successive invocations; only the first call within
-/// [window] runs — later calls inside the window become no-ops.
-RippleBody<S, E> debounced<S, E>(
+/// Rate-limits [body]: a call runs immediately, and further calls within
+/// [window] of the last one that ran are dropped as no-ops.
+///
+/// This is a *throttle* — leading-edge rate limiting — not a debounce.
+/// The distinction matters: a debounce delays until calls stop arriving
+/// and then runs once with the latest input, so it never drops the final
+/// call; this drops every call inside the window outright, including
+/// ones after the last real change, so it fits "don't sync more than once
+/// every N seconds" rather than "wait until the user stops typing."
+RippleBody<S, E> throttled<S, E>(
   RippleBody<S, E> body,
   Duration window, {
   DateTime Function()? now,

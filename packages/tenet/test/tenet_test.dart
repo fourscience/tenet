@@ -188,11 +188,11 @@ void main() {
     h.dispose();
   });
 
-  test('Combinator: debounced drops rapid-fire calls', () async {
+  test('Combinator: throttled drops rapid-fire calls', () async {
     final h = FeatureHarness<CartState>(CartFeature());
     var runs = 0;
     var fakeNow = DateTime(2024, 1, 1);
-    final d = debounced<CartState, CheckoutRequested>(
+    final d = throttled<CartState, CheckoutRequested>(
       (e, emit) async {
         runs++;
         emit(CartState(status: 'done'));

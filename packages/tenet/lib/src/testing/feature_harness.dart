@@ -77,7 +77,7 @@ final class FeatureHarness<S> {
     scope.close();
   }
 
-  /// Advances fake time and flushes microtasks — helper for debounce tests.
+  /// Advances fake time and flushes microtasks — helper for throttle tests.
   Future<void> pump([Duration duration = Duration.zero]) async {
     await Future<void>.delayed(duration);
   }

@@ -32,7 +32,7 @@ write through the narrow `StateEmitter` interface it's handed.
   - [Flow](#flow--pure-synchronous-transitions)
   - [Ripple](#ripple--cancellable-async-processes)
   - [Echo](#echo--read-only-side-effects)
-  - [Combinators: retry, withTimeout, debounced](#combinators-retry-withtimeout-debounced)
+  - [Combinators: retry, withTimeout, throttled](#combinators-retry-withtimeout-throttled)
   - [Optimistic updates](#optimistic-updates)
   - [The transaction ledger](#the-transaction-ledger)
 - [Dispatch taxonomy: Intent, Command, Event](#dispatch-taxonomy-intent-command-event)
@@ -53,7 +53,7 @@ write through the narrow `StateEmitter` interface it's handed.
   `FlowScope`; closing a scope (e.g. a screen's `dispose()`) cancels every
   Ripple spawned under it and turns late emissions into a loud
   `ScopeDeadException` instead of a silent, corrupting write.
-- **Composable Ripple behavior** — `retry`, `withTimeout`, and `debounced`
+- **Composable Ripple behavior** — `retry`, `withTimeout`, and `throttled`
   are plain decorators around a Ripple body. New behaviors are new
   functions, not new subclasses or changes to `Store` (Open/Closed).
 - **Optimistic updates with automatic rollback** — commit instantly, roll
@@ -224,7 +224,7 @@ A Ripple's `emit` is only live while the Ripple itself is: once its future
 settles, a later emission from work that outlived it is dropped and
 reported rather than committed. That is what keeps a `withTimeout` body
 that keeps running past its timeout from writing state the store already
-considers settled — see [Combinators](#combinators-retry-withtimeout-debounced).
+considers settled — see [Combinators](#combinators-retry-withtimeout-throttled).
 
 ### Echo — read-only side effects
 
@@ -238,8 +238,7 @@ echos.echo<CheckoutRequested>((event, lens) {
 }, name: 'analytics');
 ```
 
-`name` is optional here too — it labels the Echo in error reports and
-defaults to `E`'s type name.
+`name` is optional here too, defaulting to `E`'s type name.
 
 Echoes fire whenever a matching event is `dispatch`ed or `publish`ed —
 whether or not that type also has a Flow. Matching is by "is the event an
@@ -248,9 +247,12 @@ whether or not that type also has a Flow. Matching is by "is the event an
 
 An Echo that throws never takes down the dispatch that triggered it: the
 error goes to `onError` (or the `Zone`, if none is registered) and the
-remaining Echoes still run.
+remaining Echoes still run. Register `store.onEchoError((name, error,
+stackTrace) => ...)` alongside `onError` when you need to know *which*
+Echo failed — that's exactly the `name` from registration, so a log line
+or crash report can say `'analytics' failed` instead of just `Exception`.
 
-### Combinators: `retry`, `withTimeout`, `debounced`
+### Combinators: `retry`, `withTimeout`, `throttled`
 
 Each combinator is a pure decorator: `RippleBody<S, E> -> RippleBody<S, E>`.
 Compose them freely; none of them require any change to `Store` or
@@ -280,9 +282,11 @@ store.runRipple(resilientSync, event: SyncRequested(store.state.value));
   store settles the Ripple's emitter when the timeout fires. Give `body` a
   real cancellation path (race `scope.cancelled`, close the `HttpClient`)
   if the work itself must stop, not just its effect on state.
-- `debounced(body, window, {now})` — drops calls that arrive within
-  `window` of the last one that actually ran; `now` is an injectable
-  clock for deterministic tests.
+- `throttled(body, window, {now})` — a call runs immediately, then any
+  further call within `window` of the last one that actually ran is
+  dropped; `now` is an injectable clock for deterministic tests. This is a
+  throttle, not a debounce: it never delays a call to wait for input to
+  settle, it only rate-limits how often `body` can run.
 
 ### Optimistic updates
 
@@ -457,7 +461,7 @@ test('checkout Ripple commits paying then done', () async {
 ```
 
 `FeatureHarness.runRipple` awaits the Ripple to actual completion
-(including any real delays from `retry`/`withTimeout`/`debounced`) via
+(including any real delays from `retry`/`withTimeout`/`throttled`) via
 `Store.runRippleAndWait`, so assertions right after it are never racing
 the Ripple's own timers.
 
@@ -511,7 +515,7 @@ navigating away cancels in-flight work instead of leaking it.
 
 - **SRP** — `Store` owns state, the ledger, and dispatch, and nothing
   else.
-- **OCP** — behaviors (`retry`, `withTimeout`, `debounced`) compose as
+- **OCP** — behaviors (`retry`, `withTimeout`, `throttled`) compose as
   decorators around a Ripple; adding one never means changing `Store` or
   `Feature`.
 - **LSP** — every `StateLens`/`StateEmitter` implementation is
@@ -534,7 +538,7 @@ lib/
     flow_scope.dart          # FlowScope, ScopeDeadException
     dispatch.dart            # Intent, Command, Event, EventCommitted
     store.dart                # Feature, FlowRegistry, EchoRegistry, IntentRegistry, Store
-    combinators.dart         # retry, withTimeout, debounced
+    combinators.dart         # retry, withTimeout, throttled
     testing/feature_harness.dart
 example/
   tenet_example.dart                    # Flow/Ripple/Echo, end-to-end

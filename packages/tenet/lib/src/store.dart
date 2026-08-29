@@ -16,6 +16,14 @@ typedef TransactionObserver<S> = void Function(Transaction<S> transaction);
 /// Unhandled-error hook for Echoes and Ripples.
 typedef ErrorHandler = void Function(Object error, StackTrace stackTrace);
 
+/// Failure hook specific to Echoes, additionally naming which one failed.
+/// See [Store.onEchoError].
+typedef EchoErrorHandler = void Function(
+  String echoName,
+  Object error,
+  StackTrace stackTrace,
+);
+
 /// The single owner of a feature's state.
 ///
 /// Responsibilities (and nothing else):
@@ -198,6 +206,7 @@ final class Store<S> {
   final List<Transaction<S>> _ledger = [];
   final List<TransactionObserver<S>> _observers = [];
   final List<ErrorHandler> _errorHandlers = [];
+  final List<EchoErrorHandler> _echoErrorHandlers = [];
 
   /// The root scope: Ripples registered as persistent run here.
   final FlowScope rootScope = FlowScope.root();
@@ -263,6 +272,14 @@ final class Store<S> {
   /// future's error lands, and in Flutter that means the console and
   /// `FlutterError.onError`. An Echo that throws is never swallowed.
   void onError(ErrorHandler handler) => _errorHandlers.add(handler);
+
+  /// Adds a handler for Echo failures specifically — the same error
+  /// [onError] receives, plus the failing Echo's `name` (see
+  /// [EchoRegistry.echo]) so a log line or crash report can say which one.
+  /// Runs in addition to [onError]/the [Zone] fallback, never instead of
+  /// them, so existing `onError` handlers see every failure exactly as
+  /// before regardless of whether this is also registered.
+  void onEchoError(EchoErrorHandler handler) => _echoErrorHandlers.add(handler);
 
   void _report(Object error, StackTrace st) {
     if (_errorHandlers.isEmpty) {
@@ -543,6 +560,9 @@ final class Store<S> {
       try {
         entry.run(event, lens);
       } catch (e, st) {
+        for (final h in List.of(_echoErrorHandlers)) {
+          h(entry.name, e, st);
+        }
         _report(e, st);
       }
     }
@@ -560,6 +580,7 @@ final class Store<S> {
     rootScope.close();
     _observers.clear();
     _errorHandlers.clear();
+    _echoErrorHandlers.clear();
   }
 }
 

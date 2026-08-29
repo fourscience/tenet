@@ -1,3 +1,19 @@
+## 0.5.0
+
+### Added
+
+- `Store.onEchoError` — a failure hook specific to Echoes that additionally
+  names which one failed (via the `name` passed to `EchoRegistry.echo`).
+  Runs alongside `onError`/the `Zone` fallback, never instead of them.
+
+### Changed (breaking)
+
+- `debounced` is renamed to `throttled`. The behavior was never a debounce
+  — it's leading-edge rate limiting (a call runs immediately, further
+  calls within the window are dropped), not a delay-until-quiet debounce
+  — and the old name would mislead anyone who knows the term. No behavior
+  change, only the name.
+
 ## 0.4.0
 
 Correctness pass over cancellation and error reporting. Every item below
