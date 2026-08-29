@@ -1,3 +1,28 @@
+## 0.6.0
+
+### Added
+
+- `Store.observeEchos` — notified whenever an Echo runs to completion
+  without throwing, with the Echo's `name`, the event it received, and a
+  `StateLens` snapshot. A legitimate devtools/logging hook in its own
+  right, and what `FeatureHarness.echoCalls` is now built on entirely.
+- `EchoCall<S>` (in `tenet_testing.dart`) — one recorded Echo invocation,
+  carrying both `event` and a `state` snapshot from the moment it fired.
+
+### Changed (breaking)
+
+- `FeatureHarness.echoCalls` now returns `List<EchoCall<S>>` instead of
+  `List<Object?>`, and `FeatureHarness.recordEcho` is removed. Previously,
+  asserting that an Echo fired required the `Feature` under test to carry
+  a test-only static back-reference to the harness
+  (`harness?.recordEcho(name, value)` inside the Echo body) — test
+  plumbing leaking into otherwise-production code. `echoCalls` is now
+  populated automatically via `Store.observeEchos`, so a `Feature` needs
+  no test-specific code at all. Migrate a call site from
+  `harness?.recordEcho('name', someValue)` inside an Echo body to reading
+  `harness.echoCalls('name')` after the fact — `.event` for the event, or
+  `.state` for what `someValue` used to derive from `lens.state`.
+
 ## 0.5.0
 
 ### Added

@@ -24,6 +24,14 @@ typedef EchoErrorHandler = void Function(
   StackTrace stackTrace,
 );
 
+/// Notified whenever an Echo runs to completion without throwing. See
+/// [Store.observeEchos].
+typedef EchoObserver<S> = void Function(
+  String echoName,
+  Object? event,
+  StateLens<S> lens,
+);
+
 /// The single owner of a feature's state.
 ///
 /// Responsibilities (and nothing else):
@@ -207,6 +215,7 @@ final class Store<S> {
   final List<TransactionObserver<S>> _observers = [];
   final List<ErrorHandler> _errorHandlers = [];
   final List<EchoErrorHandler> _echoErrorHandlers = [];
+  final List<EchoObserver<S>> _echoObservers = [];
 
   /// The root scope: Ripples registered as persistent run here.
   final FlowScope rootScope = FlowScope.root();
@@ -280,6 +289,19 @@ final class Store<S> {
   /// them, so existing `onError` handlers see every failure exactly as
   /// before regardless of whether this is also registered.
   void onEchoError(EchoErrorHandler handler) => _echoErrorHandlers.add(handler);
+
+  /// Observes every Echo that runs to completion without throwing —
+  /// devtools, logging, or a test's way of asserting "this Echo fired"
+  /// without the [Feature] under test needing any test-specific hook of
+  /// its own. Returns an unsubscriber, matching [observe].
+  ///
+  /// `FeatureHarness` builds its Echo-call assertions (`echoCalls`)
+  /// entirely on this — a [Feature] never needs to know it's being
+  /// tested.
+  void Function() observeEchos(EchoObserver<S> observer) {
+    _echoObservers.add(observer);
+    return () => _echoObservers.remove(observer);
+  }
 
   void _report(Object error, StackTrace st) {
     if (_errorHandlers.isEmpty) {
@@ -559,6 +581,9 @@ final class Store<S> {
       if (!entry.accepts(event)) continue;
       try {
         entry.run(event, lens);
+        for (final o in List.of(_echoObservers)) {
+          o(entry.name, event, lens);
+        }
       } catch (e, st) {
         for (final h in List.of(_echoErrorHandlers)) {
           h(entry.name, e, st);
@@ -581,6 +606,7 @@ final class Store<S> {
     _observers.clear();
     _errorHandlers.clear();
     _echoErrorHandlers.clear();
+    _echoObservers.clear();
   }
 }
 

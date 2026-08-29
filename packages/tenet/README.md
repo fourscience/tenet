@@ -465,6 +465,23 @@ test('checkout Ripple commits paying then done', () async {
 `Store.runRippleAndWait`, so assertions right after it are never racing
 the Ripple's own timers.
 
+Asserting that an Echo fired needs no cooperation from the `Feature`
+itself — no test-only field, no back-reference to the harness. Give the
+Echo a `name` (as you'd want to anyway, for error reports) and read it
+back through `harness.echoCalls(name)`, built entirely on
+`Store.observeEchos`:
+
+```dart
+final harness = FeatureHarness(CartFeature());
+harness.dispatch(AddItem('x'));
+harness.dispatch(CheckoutRequested(10));
+
+final calls = harness.echoCalls('analytics'); // List<EchoCall<CartState>>
+expect(calls, hasLength(1));
+expect(calls.single.event, isA<CheckoutRequested>());
+expect(calls.single.state.status, 'idle'); // a snapshot at the moment it fired
+```
+
 See [`test/tenet_test.dart`](test/tenet_test.dart) for the Flow/Ripple/Echo
 suite — Flows, Ripple cancellation, Echoes, all three combinators,
 optimistic rollback, and the ledger — and
