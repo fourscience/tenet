@@ -78,6 +78,21 @@ bare value — read `.state` off it. Anything that `ref.observe`d the
 provider (another provider, or a Flutter widget through
 `tenet_di_flutter`) is invalidated/rebuilt whenever `.state` changes.
 
+Treat `T` as immutable: setting/updating skips notifying when the new
+value equals the old one, so mutating a `List`/`Set`/`Map` (or any type
+using default, identity-based `==`) in place and setting it back compares
+equal to itself and silently never notifies:
+
+```dart
+final items = StateProvider<List<String>>((ref) => []);
+
+// Wrong — mutates and hands back the same list instance.
+container.resolve(items).update((list) => list..add('x')); // never notifies
+
+// Right — a new list, so old != new.
+container.resolve(items).update((list) => [...list, 'x']);
+```
+
 ### Subscribing directly
 
 ```dart

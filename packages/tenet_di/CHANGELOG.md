@@ -1,3 +1,13 @@
+## 0.2.1
+
+- Documented a `StateController` footgun: setting/`update`-ing skips
+  notifying when the new value equals the old one, so mutating a
+  `List`/`Set`/`Map` (or anything using default, identity-based `==`) in
+  place and setting it back compares equal to itself and silently never
+  notifies. No behavior change — `T` was always expected to be treated as
+  immutable — this makes the expectation explicit in the doc comments and
+  README, with a regression test demonstrating it.
+
 ## 0.2.0
 
 - **Breaking:** renamed `Ref.read`/`ProviderContainer.read` to `resolve`,
