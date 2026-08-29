@@ -1,3 +1,16 @@
+## 0.6.1
+
+### Documentation
+
+- Documented that `Feature.name`, `Command.name`, and the `name` a
+  Flow/Echo defaults to all read `runtimeType.toString()`/`E.toString()`,
+  which a release build with identifier obfuscation on (`flutter build
+  ... --obfuscate`) mangles into an opaque, per-build string. Pass an
+  explicit `name` wherever one needs to stay human-readable in an
+  obfuscated build's logs or crash reports. Routing itself is unaffected
+  — `dispatch`/`send`/`execute`/`publish` match on the `Type` object, not
+  its string form.
+
 ## 0.6.0
 
 ### Added

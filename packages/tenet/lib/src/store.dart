@@ -48,6 +48,15 @@ abstract class Feature<S> {
   S get initial;
 
   /// Optional name for debugging; defaults to the runtime type.
+  ///
+  /// That default reads `runtimeType.toString()`, which a release build
+  /// with identifier obfuscation on (`flutter build ... --obfuscate`)
+  /// mangles into an opaque, per-build string instead of the class's real
+  /// name — the same thing that happens to obfuscated stack traces.
+  /// Override this with an explicit literal if a feature's name needs to
+  /// stay stable and readable in an obfuscated build (log lines, crash
+  /// reports, anywhere the string itself is inspected rather than just
+  /// compared for equality).
   String get name => runtimeType.toString();
 
   /// Override to register this feature's Flows. Called once by the [Store].
@@ -72,7 +81,11 @@ abstract class FlowRegistry<S> {
   /// Registers [flow] for events of type [E]. [name] becomes the ledger
   /// transaction's `source` (see [Transaction.source]) — pass one when
   /// `$E` on its own wouldn't read well there (e.g. `name: 'addItem'`
-  /// instead of the default `'AddItem'`). Defaults to `E`'s type name.
+  /// instead of the default `'AddItem'`). Defaults to `E`'s type name —
+  /// which, like [Feature.name], a release build with identifier
+  /// obfuscation on mangles into an opaque string; pass an explicit
+  /// [name] for a Flow whose ledger `source` needs to stay readable
+  /// there.
   void flow<E>(Flow<S, E> flow, {String? name});
 }
 
@@ -83,7 +96,8 @@ abstract class EchoRegistry<S> {
   /// An Echo receives every dispatched/published event that *is* an [E] —
   /// including instances of its subtypes — so `echo<Event>(...)` is a
   /// legitimate catch-all audit hook. [name] labels the Echo in error
-  /// reports; it defaults to `E`'s type name.
+  /// reports; it defaults to `E`'s type name — see [Feature.name]'s doc
+  /// comment for why an explicit [name] matters in an obfuscated build.
   void echo<E>(EchoBody<S, E> body, {String? name});
 }
 

@@ -341,6 +341,20 @@ ends a store's writes, it doesn't erase its history. Starting a Ripple on
 a closed store is reported through the usual error path rather than
 thrown, since `runRipple` never throws at its call site.
 
+### A note on names and obfuscated builds
+
+`Feature.name`, `Command.name`, and the `name` a Flow/Echo defaults to
+when you don't pass one all read `runtimeType.toString()`/`E.toString()`.
+A release build with identifier obfuscation on (`flutter build ...
+--obfuscate`) mangles those strings into opaque, per-build values — the
+same thing that happens to an obfuscated stack trace — so a ledger
+`source` or a feature name meant to stay human-readable in production
+(logs, crash reports, anything a person or a log aggregator actually
+reads) needs an explicit `name` rather than the default. This doesn't
+affect *routing*: `dispatch`/`send`/`execute`/`publish` match on the
+actual `Type` object, which stays a stable, distinct value regardless of
+obfuscation — only the `.toString()` of it changes.
+
 ## Dispatch taxonomy: Intent, Command, Event
 
 `dispatch` (above) is enough for a feature where one event type driving a
