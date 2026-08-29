@@ -4,7 +4,7 @@ description: >-
   Dart — declarative providers, a lazy caching container, an
   invalidation/notification graph, and testing overrides. Works with or
   without Flutter; see tenet_di_flutter for the widget bindings.
-version: 0.2.1
+version: 0.3.0
 homepage: https://github.com/fourscience/tenet/tree/main/packages/tenet_di
 repository: https://github.com/fourscience/tenet
 issue_tracker: https://github.com/fourscience/tenet/issues

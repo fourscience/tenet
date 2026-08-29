@@ -21,15 +21,17 @@ class CounterText extends ConsumerWidget {
 }
 ```
 
-This package re-exports `tenet_di` in full, so an app only needs to
-depend on `tenet_di_flutter` to get `Provider`, `StateProvider`,
-`ProviderContainer`, and everything on this page.
+This package re-exports `tenet_di`, so an app only needs to depend on
+`tenet_di_flutter` to get `Provider`, `StateProvider`, `ProviderContainer`,
+and everything on this page — except the top-level `resolve`/`observe`
+sugar, which stays behind its own opt-in import; see
+[section 4](#4-no-buildcontext-at-hand-either) below.
 
 ## Installation
 
 ```yaml
 dependencies:
-  tenet_di_flutter: ^0.2.0
+  tenet_di_flutter: ^0.4.0
 ```
 
 ## Usage
@@ -92,18 +94,61 @@ It's `resolve`, not `read`/`watch`: `package:provider` already defines
 `flutter_bloc` re-exports both as-is), and Dart treats two same-named
 extension members on the same type as an unresolvable ambiguity, not
 something an import prefix can quietly resolve the way a plain
-class-name clash can. Naming this differently means you can add
-`tenet_di_flutter` to a codebase that already uses
-`package:provider`/`flutter_bloc`, unprefixed, and migrate one widget at
-a time instead of all at once. `Ref`/`WidgetRef`'s own `resolve`/
-`observe` never had this problem — they're methods on this package's own
-interfaces, not extensions on `BuildContext` — but got the same names for
-consistency.
+class-name clash can. `Ref`/`WidgetRef`'s own `resolve`/`observe` never
+had this problem — they're methods on this package's own interfaces, not
+extensions on `BuildContext` — but got the same names for consistency.
+
+That sidesteps the extension collision, but `Provider`/`Consumer` are
+still plain classes with the same names as `package:provider`'s — see
+[Coexisting with `package:provider`](#coexisting-with-packageprovider)
+for how to actually run both side by side.
+
+## Coexisting with `package:provider`
+
+Adding `tenet_di_flutter` to a codebase that already uses
+`package:provider` (or `flutter_bloc`, which re-exports it) and migrating
+one widget at a time needs one more step beyond the `resolve`/`read`
+naming above: `tenet_di`'s `Provider` and this package's
+`Consumer`/`ConsumerWidget` are plain classes with the same names as
+`package:provider`'s, so importing `tenet_di_flutter.dart` unprefixed
+alongside `package:provider` unprefixed is an `ambiguous_import` error.
+Unlike the extension-method collision, this *is* exactly what an import
+prefix is for — prefix the main library, and import `context_extensions`
+(the piece with no colliding class names) on its own, unprefixed:
+
+```dart
+import 'package:provider/provider.dart';
+import 'package:tenet_di_flutter/tenet_di_flutter.dart' as di;
+import 'package:tenet_di_flutter/context_extensions.dart'; // unprefixed
+
+final greeting = di.Provider<String>((ref) => 'hi');
+
+class StillOnPackageProvider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) =>
+      Consumer<String>(builder: (c, v, _) => Text(v)); // package:provider
+}
+
+class MigratedToTenet extends di.ConsumerWidget {
+  @override
+  Widget build(BuildContext context, di.WidgetRef ref) =>
+      Text(ref.observe(greeting));
+}
+
+class OneOffReadMidMigration extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) =>
+      Text(context.resolve(greeting)); // the extension, still unprefixed
+}
+```
+
+Verified against `package:provider` directly: with this import shape,
+`flutter analyze` reports no issues.
 
 ### 4. No `BuildContext` at hand either?
 
-`tenet_di`'s top-level `resolve`/`observe` (re-exported here) work
-without any container, scope, or `BuildContext` — see
+`rootContainer` (re-exported here) works without any container, scope, or
+`BuildContext` — see
 [`tenet_di`'s README](../tenet_di/README.md#no-container-of-your-own-at-hand)
 for the full story. Pass that same `rootContainer` to `ProviderScope` to
 make the widget tree share state with code reached that way:
@@ -113,6 +158,21 @@ void main() => runApp(
   ProviderScope(container: rootContainer, child: const MyApp()),
 );
 ```
+
+For the bare top-level `resolve`/`observe` functions themselves (sugar
+for `rootContainer.resolve`/`rootContainer.observe`), add one more,
+separate import — `package:tenet_di_flutter/global.dart` — rather than
+`tenet_di_flutter.dart` alone:
+
+```dart
+import 'package:tenet_di_flutter/tenet_di_flutter.dart';
+import 'package:tenet_di_flutter/global.dart';
+
+print(resolve(greetingProvider));
+```
+
+Kept opt-in for the same reason as in `tenet_di` itself: see
+[`tenet_di`'s README](../tenet_di/README.md#no-container-of-your-own-at-hand).
 
 Leaving `container` unset (the default) is right for almost every app —
 each `ProviderScope` then owns a private container, which is what keeps

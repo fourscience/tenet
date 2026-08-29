@@ -3,6 +3,7 @@
 // Run it with:
 //   dart run example/tenet_di_example.dart
 
+import 'package:tenet_di/global.dart'; // opt-in: bare resolve/observe
 import 'package:tenet_di/tenet_di.dart';
 
 /// A dependency with no dependencies of its own.
@@ -75,7 +76,8 @@ void main() {
   testContainer.dispose();
 
   // No container of your own at hand — no Ref, no WidgetRef, no
-  // BuildContext? The top-level resolve/observe read through
+  // BuildContext? The top-level resolve/observe (from the separate,
+  // opt-in package:tenet_di/global.dart import above) read through
   // rootContainer, a shared default created lazily on first use.
   print('\nVia the root container: ${resolve(welcomeMessageProvider)}');
 }

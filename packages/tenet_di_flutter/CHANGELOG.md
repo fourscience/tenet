@@ -1,3 +1,30 @@
+## 0.4.0
+
+### Added
+
+- `package:tenet_di_flutter/context_extensions.dart` — the `BuildContext
+  .resolve` extension as its own standalone import, with no colliding
+  class names, so it can be imported unprefixed even in an app that also
+  imports `package:provider` unprefixed. Prefixing the main
+  `tenet_di_flutter.dart` import (`as di`) avoids the `Provider`/
+  `Consumer` class-name clash with `package:provider` — see
+  [Coexisting with `package:provider`](README.md#coexisting-with-packageprovider)
+  in the README for the full, verified recipe. This corrects an earlier
+  doc comment that implied the whole migration story worked unprefixed;
+  only the extension method ever did.
+- `package:tenet_di_flutter/global.dart` — re-exports `tenet_di`'s
+  opt-in top-level `resolve`/`observe`, so an app depending only on
+  `tenet_di_flutter` doesn't need `tenet_di` as a direct dependency to
+  use them.
+
+### Changed (breaking)
+
+- Requires `tenet_di ^0.3.0`, whose top-level `resolve`/`observe` moved
+  behind that package's own opt-in `global.dart` (re-exported here at
+  `package:tenet_di_flutter/global.dart` — see above). Code using the
+  bare `resolve`/`observe` functions needs that extra import now;
+  `rootContainer`/`resetRootContainer` are unaffected.
+
 ## 0.3.0
 
 ### Fixed

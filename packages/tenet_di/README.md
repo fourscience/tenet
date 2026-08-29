@@ -140,9 +140,18 @@ container.dispose();            // tears everything down; container is unusable 
 A `main()`, a background service, a plain top-level function — anywhere
 with no natural container (and, in Flutter, no `BuildContext`) to thread
 through — can `resolve`/`observe` directly, without constructing or
-importing a `ProviderContainer` type at all:
+importing a `ProviderContainer` type at all. This sugar lives behind its
+own opt-in import, `package:tenet_di/global.dart`, kept separate from the
+main `tenet_di.dart` — `resolve`/`observe` are common enough names that
+pulling bare top-level functions with those names into *every* importer's
+namespace by default would be its own collision risk, the same kind this
+package's naming already sidesteps elsewhere (see
+[Coexisting with `package:provider`](#coexisting-with-packageprovider)):
 
 ```dart
+import 'package:tenet_di/tenet_di.dart';
+import 'package:tenet_di/global.dart';
+
 final greetingProvider = Provider<String>((ref) => 'hello');
 
 void main() {

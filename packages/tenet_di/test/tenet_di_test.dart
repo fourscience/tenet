@@ -1,3 +1,4 @@
+import 'package:tenet_di/global.dart'; // opt-in: bare resolve/observe
 import 'package:tenet_di/tenet_di.dart';
 import 'package:test/test.dart';
 

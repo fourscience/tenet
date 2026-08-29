@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tenet_di_flutter/global.dart'; // opt-in: bare resolve/observe
 import 'package:tenet_di_flutter/tenet_di_flutter.dart';
 
 // Regression: package:provider puts a zero-argument `context.read<T>()`
