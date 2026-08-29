@@ -1,3 +1,16 @@
+## 0.3.0
+
+### Fixed
+
+- A provider changing while another widget's build was still in progress
+  — e.g. writing to a `StateProvider` from inside a `build` method —
+  crashed every `ConsumerWidget`/`Consumer` observing it with "setState()
+  or markNeedsBuild() called during build." Notifications that arrive
+  during Flutter's build/layout/paint phase are now deferred to a
+  post-frame callback, matching the framework's own guidance for this
+  case; the observer still rebuilds, just on the following frame instead
+  of crashing mid-build.
+
 ## 0.2.0
 
 - **Breaking:** `WidgetRef.read`/`.watch` are now `.resolve`/`.observe`,

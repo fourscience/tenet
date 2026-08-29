@@ -1,3 +1,4 @@
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:tenet_di/tenet_di.dart';
 
@@ -80,7 +81,22 @@ final class _ConsumerWidgetState extends State<ConsumerWidget> {
   }
 
   void _handleProviderChanged() {
-    if (mounted) setState(() {});
+    // A provider can change while Flutter is mid-build/layout/paint of the
+    // *current* frame — e.g. another widget writes to a StateProvider from
+    // inside its own build method. Calling setState synchronously in that
+    // window hits "setState() or markNeedsBuild() called during build",
+    // because the framework is already walking the tree this would dirty.
+    // Deferring to the next frame's post-frame callback is what Flutter
+    // itself recommends for exactly this case (see
+    // `SchedulerBinding.instance.addPostFrameCallback`'s doc comment).
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
+    } else if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
