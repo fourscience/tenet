@@ -109,29 +109,21 @@ class SwitchFeature extends Feature<SwitchState> {
 
   @override
   void registerEchos(EchoRegistry<SwitchState> echos) {
-    echos.echo<SwitchToggled>((event, lens) {
-      harness?.recordEcho('toggled', event.on);
-    }, name: 'toggled');
-    echos.echo<EventCommitted>((event, lens) {
-      harness?.recordEcho('committed', event.source);
-    }, name: 'committed');
-    echos.echo<OtherEvent>((event, lens) {
-      harness?.recordEcho('other', null);
-    }, name: 'other');
+    // Bodies do nothing observable — the harness's echoCalls(name)
+    // (backed by Store.observeEchos) is what proves each one fired, with
+    // no back-reference needed here.
+    echos.echo<SwitchToggled>((event, lens) {}, name: 'toggled');
+    echos.echo<EventCommitted>((event, lens) {}, name: 'committed');
+    echos.echo<OtherEvent>((event, lens) {}, name: 'other');
   }
-
-  // Test back-reference (set by tests) so Echoes can record calls.
-  static FeatureHarness<SwitchState>? harness;
 }
 
 void main() {
   test('Intent: routes to its handler, which executes a Command', () {
     final h = FeatureHarness<SwitchState>(SwitchFeature());
-    SwitchFeature.harness = h;
     h.send(const ToggleSwitch());
     expect(h.state.on, isTrue);
     expect(h.transactions.first.source, 'setSwitch');
-    SwitchFeature.harness = null;
     h.dispose();
   });
 
@@ -166,16 +158,15 @@ void main() {
     'Event: publish is routed by the published type, not by Event itself',
     () {
       final h = FeatureHarness<SwitchState>(SwitchFeature());
-      SwitchFeature.harness = h;
 
       h.send(const ToggleSwitch());
 
       // The custom SwitchToggled Event reached its own Echo...
-      expect(h.echoCalls('toggled'), [true]);
+      expect(h.echoCalls('toggled').map((c) => (c.event as SwitchToggled).on),
+          [true]);
       // ...but never the Echo registered for a *different* Event type.
       expect(h.echoCalls('other'), isEmpty);
 
-      SwitchFeature.harness = null;
       h.dispose();
     },
   );
@@ -184,7 +175,6 @@ void main() {
     'Event: EventCommitted is published automatically for every commit',
     () async {
       final h = FeatureHarness<SwitchState>(SwitchFeature());
-      SwitchFeature.harness = h;
 
       h.send(const ToggleSwitch());
       // The Intent handler's Ripple (launched fire-and-forget) still has
@@ -193,10 +183,12 @@ void main() {
 
       // One EventCommitted for the executed Command, one for the Ripple's
       // emission — both automatic, neither hand-wired by the feature.
-      expect(h.echoCalls('committed'), ['setSwitch', 'sync']);
+      expect(
+        h.echoCalls('committed').map((c) => (c.event as EventCommitted).source),
+        ['setSwitch', 'sync'],
+      );
       expect(h.state.synced, isTrue);
 
-      SwitchFeature.harness = null;
       h.dispose();
     },
   );

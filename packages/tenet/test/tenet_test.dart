@@ -83,14 +83,11 @@ class CartFeature extends Feature<CartState> {
 
   @override
   void registerEchos(EchoRegistry<CartState> echos) {
-    echos.echo<CheckoutRequested>((event, lens) {
-      // Read-only proof: lens.state accessible, no write API exists.
-      harness?.recordEcho('analytics', lens.state.status);
-    }, name: 'analytics');
+    // The body itself does nothing observable — the harness's
+    // `echoCalls('analytics')` (backed by Store.observeEchos) is what
+    // proves this Echo fired, with no back-reference needed here.
+    echos.echo<CheckoutRequested>((event, lens) {}, name: 'analytics');
   }
-
-  // Test back-reference (set by tests) so the Echo can record calls.
-  static FeatureHarness<CartState>? harness;
 }
 
 void main() {
@@ -113,12 +110,12 @@ void main() {
 
   test('Echo: receives events with read-only lens, cannot corrupt state', () {
     final h = FeatureHarness<CartState>(CartFeature());
-    CartFeature.harness = h;
     h.dispatch(AddItem('pen'));
     h.dispatch(CheckoutRequested(10));
-    expect(h.echoCalls('analytics'), ['idle']);
+    // The recorded state snapshot proves the Echo's lens reflected live
+    // state at the moment it fired.
+    expect(h.echoCalls('analytics').map((c) => c.state.status), ['idle']);
     expect(h.state.status, 'idle');
-    CartFeature.harness = null;
     h.dispose();
   });
 
@@ -188,11 +185,11 @@ void main() {
     h.dispose();
   });
 
-  test('Combinator: debounced drops rapid-fire calls', () async {
+  test('Combinator: throttled drops rapid-fire calls', () async {
     final h = FeatureHarness<CartState>(CartFeature());
     var runs = 0;
     var fakeNow = DateTime(2024, 1, 1);
-    final d = debounced<CartState, CheckoutRequested>(
+    final d = throttled<CartState, CheckoutRequested>(
       (e, emit) async {
         runs++;
         emit(CartState(status: 'done'));
@@ -246,14 +243,12 @@ void main() {
       'view (LSP/ISP)', () {
     final h = FeatureHarness<CartState>(CartFeature());
     StateLens<CartState>? captured;
-    CartFeature.harness = h;
     h.dispatch(AddItem('kiwi'));
     // The Echo above only ever receives a StateLens — proof that any
     // conforming implementation is substitutable and exposes no write API.
     h.store.dispatch(CheckoutRequested(1));
     captured = _capturingLens(h.store);
     expect(captured.state.items, ['kiwi']);
-    CartFeature.harness = null;
     h.dispose();
   });
 }

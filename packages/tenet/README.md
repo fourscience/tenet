@@ -32,7 +32,7 @@ write through the narrow `StateEmitter` interface it's handed.
   - [Flow](#flow--pure-synchronous-transitions)
   - [Ripple](#ripple--cancellable-async-processes)
   - [Echo](#echo--read-only-side-effects)
-  - [Combinators: retry, withTimeout, debounced](#combinators-retry-withtimeout-debounced)
+  - [Combinators: retry, withTimeout, throttled](#combinators-retry-withtimeout-throttled)
   - [Optimistic updates](#optimistic-updates)
   - [The transaction ledger](#the-transaction-ledger)
 - [Dispatch taxonomy: Intent, Command, Event](#dispatch-taxonomy-intent-command-event)
@@ -53,7 +53,7 @@ write through the narrow `StateEmitter` interface it's handed.
   `FlowScope`; closing a scope (e.g. a screen's `dispose()`) cancels every
   Ripple spawned under it and turns late emissions into a loud
   `ScopeDeadException` instead of a silent, corrupting write.
-- **Composable Ripple behavior** — `retry`, `withTimeout`, and `debounced`
+- **Composable Ripple behavior** — `retry`, `withTimeout`, and `throttled`
   are plain decorators around a Ripple body. New behaviors are new
   functions, not new subclasses or changes to `Store` (Open/Closed).
 - **Optimistic updates with automatic rollback** — commit instantly, roll
@@ -163,10 +163,16 @@ Dispatch synchronously through the `Store`:
 store.dispatch(RemoveItem('sku-123'));
 ```
 
-`dispatch` fails fast — it throws `StateError` — only when an event type
-has **neither** a Flow **nor** an Echo registered. An Echo-only event
-(e.g. one that exists purely to drive analytics) doesn't need a no-op Flow
-just to be dispatchable.
+`dispatch` fails fast — it throws `StateError` — only when an event has
+**neither** a Flow **nor** an Echo registered. An Echo-only event (e.g.
+one that exists purely to drive analytics) doesn't need a no-op Flow just
+to be dispatchable.
+
+Routing follows the event's **runtime** type, never the static type at the
+call site — the same rule `send` and `publish` use. Passing an event
+through a variable or generic wrapper that widens its static type still
+reaches the Flow and Echoes it was registered against, instead of quietly
+matching nothing.
 
 ### Ripple — cancellable async processes
 
@@ -209,6 +215,17 @@ the call site:
 store.onError((error, stackTrace) => log.warning('ripple failed', error));
 ```
 
+With no handler registered, failures go to the current `Zone`'s
+uncaught-error handler instead — the same place an unawaited future's
+error lands, which in Flutter means the console and `FlutterError.onError`.
+A Ripple or Echo that throws is never silently swallowed.
+
+A Ripple's `emit` is only live while the Ripple itself is: once its future
+settles, a later emission from work that outlived it is dropped and
+reported rather than committed. That is what keeps a `withTimeout` body
+that keeps running past its timeout from writing state the store already
+considers settled — see [Combinators](#combinators-retry-withtimeout-throttled).
+
 ### Echo — read-only side effects
 
 An `EchoBody<S, E>` is `void Function(E event, StateLens<S> lens)`. `lens`
@@ -221,14 +238,21 @@ echos.echo<CheckoutRequested>((event, lens) {
 }, name: 'analytics');
 ```
 
-`name` is optional here too — a label for readability, defaulting to
-`E`'s type name — and, unlike a Flow's, isn't consumed anywhere else
-yet.
+`name` is optional here too, defaulting to `E`'s type name.
 
-Echoes fire whenever their event type is `dispatch`ed — whether or not
-that type also has a Flow.
+Echoes fire whenever a matching event is `dispatch`ed or `publish`ed —
+whether or not that type also has a Flow. Matching is by "is the event an
+`E`?", so an Echo registered for a supertype receives every subtype, and
+`echo<Event>(...)` is a legitimate catch-all audit hook.
 
-### Combinators: `retry`, `withTimeout`, `debounced`
+An Echo that throws never takes down the dispatch that triggered it: the
+error goes to `onError` (or the `Zone`, if none is registered) and the
+remaining Echoes still run. Register `store.onEchoError((name, error,
+stackTrace) => ...)` alongside `onError` when you need to know *which*
+Echo failed — that's exactly the `name` from registration, so a log line
+or crash report can say `'analytics' failed` instead of just `Exception`.
+
+### Combinators: `retry`, `withTimeout`, `throttled`
 
 Each combinator is a pure decorator: `RippleBody<S, E> -> RippleBody<S, E>`.
 Compose them freely; none of them require any change to `Store` or
@@ -247,13 +271,22 @@ final resilientSync = retry<CounterState, SyncRequested>(
 store.runRipple(resilientSync, event: SyncRequested(store.state.value));
 ```
 
-- `retry(body, {required max, delay})` — retries on any thrown error, up
-  to `max` times, with linear backoff of `delay` between attempts.
+- `retry(body, {required max, delay})` — retries on a thrown error, up to
+  `max` times (so `body` runs at most `max + 1` times), waiting `delay`
+  between attempts. A `ScopeDeadException` is never retried: the scope was
+  cancelled, so every further attempt would do real work only to fail the
+  same way.
 - `withTimeout(body, limit)` — fails with `TimeoutException` if `body`
-  doesn't finish within `limit`.
-- `debounced(body, window, {now})` — drops calls that arrive within
-  `window` of the last one that actually ran; `now` is an injectable
-  clock for deterministic tests.
+  doesn't finish within `limit`. Dart cannot abort a future, so `body`
+  itself keeps running — but it can no longer change state, since the
+  store settles the Ripple's emitter when the timeout fires. Give `body` a
+  real cancellation path (race `scope.cancelled`, close the `HttpClient`)
+  if the work itself must stop, not just its effect on state.
+- `throttled(body, window, {now})` — a call runs immediately, then any
+  further call within `window` of the last one that actually ran is
+  dropped; `now` is an injectable clock for deterministic tests. This is a
+  throttle, not a debounce: it never delays a call to wait for input to
+  settle, it only rate-limits how often `body` can run.
 
 ### Optimistic updates
 
@@ -286,6 +319,41 @@ final unsubscribe = store.observe((txn) => print(txn));
 // ...
 unsubscribe();
 ```
+
+The ledger keeps the most recent 1000 transactions by default and drops
+the oldest beyond that — an in-memory list that only grows is a slow leak
+in a long-lived process. `sequence` keeps counting from the very first
+commit regardless, so a trimmed ledger still tells you how much history
+came before it:
+
+```dart
+Store<CartState>(CartFeature(), ledgerLimit: 200);   // keep less
+Store<CartState>(CartFeature(), ledgerLimit: null);  // keep everything
+```
+
+### Closing a store
+
+`store.close()` cancels every Ripple (by closing `rootScope`), drops every
+ledger observer and error handler, and refuses any further
+`dispatch`/`send`/`execute`/`publish` with a `StateError` — a closed store
+is done, not merely quiet. `state` and `ledger` stay readable; closing
+ends a store's writes, it doesn't erase its history. Starting a Ripple on
+a closed store is reported through the usual error path rather than
+thrown, since `runRipple` never throws at its call site.
+
+### A note on names and obfuscated builds
+
+`Feature.name`, `Command.name`, and the `name` a Flow/Echo defaults to
+when you don't pass one all read `runtimeType.toString()`/`E.toString()`.
+A release build with identifier obfuscation on (`flutter build ...
+--obfuscate`) mangles those strings into opaque, per-build values — the
+same thing that happens to an obfuscated stack trace — so a ledger
+`source` or a feature name meant to stay human-readable in production
+(logs, crash reports, anything a person or a log aggregator actually
+reads) needs an explicit `name` rather than the default. This doesn't
+affect *routing*: `dispatch`/`send`/`execute`/`publish` match on the
+actual `Type` object, which stays a stable, distinct value regardless of
+obfuscation — only the `.toString()` of it changes.
 
 ## Dispatch taxonomy: Intent, Command, Event
 
@@ -407,9 +475,26 @@ test('checkout Ripple commits paying then done', () async {
 ```
 
 `FeatureHarness.runRipple` awaits the Ripple to actual completion
-(including any real delays from `retry`/`withTimeout`/`debounced`) via
+(including any real delays from `retry`/`withTimeout`/`throttled`) via
 `Store.runRippleAndWait`, so assertions right after it are never racing
 the Ripple's own timers.
+
+Asserting that an Echo fired needs no cooperation from the `Feature`
+itself — no test-only field, no back-reference to the harness. Give the
+Echo a `name` (as you'd want to anyway, for error reports) and read it
+back through `harness.echoCalls(name)`, built entirely on
+`Store.observeEchos`:
+
+```dart
+final harness = FeatureHarness(CartFeature());
+harness.dispatch(AddItem('x'));
+harness.dispatch(CheckoutRequested(10));
+
+final calls = harness.echoCalls('analytics'); // List<EchoCall<CartState>>
+expect(calls, hasLength(1));
+expect(calls.single.event, isA<CheckoutRequested>());
+expect(calls.single.state.status, 'idle'); // a snapshot at the moment it fired
+```
 
 See [`test/tenet_test.dart`](test/tenet_test.dart) for the Flow/Ripple/Echo
 suite — Flows, Ripple cancellation, Echoes, all three combinators,
@@ -461,7 +546,7 @@ navigating away cancels in-flight work instead of leaking it.
 
 - **SRP** — `Store` owns state, the ledger, and dispatch, and nothing
   else.
-- **OCP** — behaviors (`retry`, `withTimeout`, `debounced`) compose as
+- **OCP** — behaviors (`retry`, `withTimeout`, `throttled`) compose as
   decorators around a Ripple; adding one never means changing `Store` or
   `Feature`.
 - **LSP** — every `StateLens`/`StateEmitter` implementation is
@@ -484,7 +569,7 @@ lib/
     flow_scope.dart          # FlowScope, ScopeDeadException
     dispatch.dart            # Intent, Command, Event, EventCommitted
     store.dart                # Feature, FlowRegistry, EchoRegistry, IntentRegistry, Store
-    combinators.dart         # retry, withTimeout, debounced
+    combinators.dart         # retry, withTimeout, throttled
     testing/feature_harness.dart
 example/
   tenet_example.dart                    # Flow/Ripple/Echo, end-to-end

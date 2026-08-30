@@ -2,6 +2,26 @@ import 'dart:async';
 
 import '../../tenet.dart';
 
+/// A single recorded call to a named Echo — see [FeatureHarness.echoCalls].
+///
+/// Carries both the [event] the Echo received and a snapshot of [state] at
+/// that moment, since assertions commonly want one or the other (or both):
+/// [event] to check what triggered the Echo, [state] to prove the Echo's
+/// [StateLens] reflected the store's live state at the time.
+final class EchoCall<S> {
+  /// The event the Echo received.
+  final Object? event;
+
+  /// A snapshot of the store's state at the moment the Echo ran.
+  final S state;
+
+  /// Creates a record of one Echo invocation.
+  const EchoCall(this.event, this.state);
+
+  @override
+  String toString() => 'EchoCall($event, $state)';
+}
+
 /// A test harness for a [Feature]: instantiates its [Store], records every
 /// transaction, captures Echo invocations, and exposes helpers for fluent
 /// assertions.
@@ -12,21 +32,35 @@ import '../../tenet.dart';
 /// expect(harness.state.items, ['x']);
 /// expect(harness.transactions.map((t) => t.source), ['addItem']);
 /// ```
+///
+/// Echo assertions need no cooperation from the [Feature] under test — no
+/// test-only field or back-reference on it — because [echoCalls] is built
+/// entirely on [Store.observeEchos], a store-level hook any Echo already
+/// passes through:
+///
+/// ```dart
+/// expect(harness.echoCalls('analytics').map((c) => c.state.status), ['idle']);
+/// ```
 final class FeatureHarness<S> {
   /// The store under test.
   final Store<S> store;
 
   final List<Transaction<S>> _transactions = [];
-  final Map<String, List<Object?>> _echoCalls = {};
+  final Map<String, List<EchoCall<S>>> _echoCalls = {};
 
   /// Errors reported by Echoes/Ripples since harness creation.
   final List<(Object, StackTrace)> errors = [];
 
-  /// Creates a harness; automatically installs a ledger observer and an
-  /// error collector (access via [errors]).
+  /// Creates a harness; automatically installs a ledger observer, an Echo
+  /// observer (backing [echoCalls]), and an error collector (access via
+  /// [errors]).
   FeatureHarness(Feature<S> feature) : store = Store<S>(feature) {
     store.observe((t) => _transactions.add(t));
     store.onError((e, st) => errors.add((e, st)));
+    store.observeEchos(
+      (name, event, lens) =>
+          (_echoCalls[name] ??= []).add(EchoCall(event, lens.state)),
+    );
   }
 
   /// Current state.
@@ -53,13 +87,12 @@ final class FeatureHarness<S> {
   /// Broadcasts an [Event] to Echoes.
   void publish<E extends Event>(E event) => store.publish<E>(event);
 
-  /// Records that an Echo named [name] received [event]; used with
-  /// [echoCalls] to assert Echo wiring without asserting internals.
-  void recordEcho(String name, Object? event) =>
-      (_echoCalls[name] ??= []).add(event);
-
-  /// All events an Echo named [name] has received (via [recordEcho]).
-  List<Object?> echoCalls(String name) =>
+  /// Every call the Echo named [name] (see [EchoRegistry.echo]'s `name`)
+  /// has received, oldest first — each with the event it got and a
+  /// snapshot of [state] at that moment. Empty if that Echo was never
+  /// reached, whether because it doesn't exist or because nothing
+  /// matching its event type has fired yet.
+  List<EchoCall<S>> echoCalls(String name) =>
       List.unmodifiable(_echoCalls[name] ?? const []);
 
   /// Runs an async Ripple to completion inside the harness's root scope and
@@ -77,7 +110,7 @@ final class FeatureHarness<S> {
     scope.close();
   }
 
-  /// Advances fake time and flushes microtasks — helper for debounce tests.
+  /// Advances fake time and flushes microtasks — helper for throttle tests.
   Future<void> pump([Duration duration = Duration.zero]) async {
     await Future<void>.delayed(duration);
   }

@@ -57,7 +57,10 @@ abstract class Command<S> extends Dispatch {
 
   /// Name recorded as the transaction's `source` in the ledger, unless
   /// `Store.execute` is called with an explicit override. Defaults to the
-  /// command's runtime type, mirroring `Feature.name`.
+  /// command's runtime type, mirroring `Feature.name` — including that
+  /// default's obfuscated-build caveat (see `Feature.name`'s doc
+  /// comment): override this if the ledger's `source` needs to stay
+  /// readable in a build with identifier obfuscation on.
   String get name => runtimeType.toString();
 
   /// The pure transition this command encodes.
