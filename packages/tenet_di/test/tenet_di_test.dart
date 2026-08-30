@@ -1,3 +1,4 @@
+import 'package:tenet_di/global.dart'; // opt-in: bare resolve/observe
 import 'package:tenet_di/tenet_di.dart';
 import 'package:test/test.dart';
 
@@ -179,6 +180,36 @@ void main() {
       final container = ProviderContainer();
       container.resolve(counter).update((n) => n + 1);
       expect(container.resolve(counter).state, 6);
+      container.dispose();
+    });
+
+    test(
+        'documents a footgun: mutating the current value in place never '
+        'notifies, since it compares equal (identical) to itself', () {
+      final listProvider = StateProvider<List<int>>((ref) => []);
+      final container = ProviderContainer();
+      var notifications = 0;
+      container.observe(listProvider, () => notifications++);
+
+      // Wrong: mutates and returns the very same list instance.
+      container.resolve(listProvider).update((items) => items..add(1));
+      expect(
+        container.resolve(listProvider).state,
+        [1],
+        reason: 'the mutation did happen...',
+      );
+      expect(
+        notifications,
+        0,
+        reason: '...but nothing was told, because the "new" value is '
+            'identical to the old one. See StateController\'s doc comment.',
+      );
+
+      // Right: a new list, so old != new and observers are notified.
+      container.resolve(listProvider).update((items) => [...items, 2]);
+      expect(container.resolve(listProvider).state, [1, 2]);
+      expect(notifications, 1);
+
       container.dispose();
     });
 

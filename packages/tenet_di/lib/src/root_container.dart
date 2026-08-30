@@ -10,7 +10,9 @@ import 'provider.dart';
 /// code that has no provider graph, no [Ref], and often no `BuildContext`
 /// to thread one through at all: a `main()`, a background service, a
 /// plain top-level function. [resolve] and [observe] below are sugar for
-/// `rootContainer.resolve`/`rootContainer.observe` for exactly that case.
+/// `rootContainer.resolve`/`rootContainer.observe` for exactly that case
+/// — imported separately, from `package:tenet_di/global.dart`, not this
+/// library; see that file's doc comment for why.
 ///
 /// Prefer an explicitly-created [ProviderContainer] wherever one
 /// naturally exists already — inside a `Ref`, inside a `WidgetRef`, or in

@@ -4,6 +4,23 @@ import 'ref.dart';
 /// A minimal, live, mutable holder for a value of type [T] — what a
 /// [StateProvider] actually produces. Read `.state` for the current
 /// value; set it (or call [update]) to change it and notify subscribers.
+///
+/// [T] must be treated as immutable: always set a *new* value rather than
+/// mutating the current one in place. Notification is skipped whenever
+/// `newValue == currentValue`, and for a mutable [T] with the default,
+/// identity-based `==` (a plain `List`/`Set`/`Map`, or any class that
+/// doesn't override `==`), mutating `state` in place and setting it back
+/// compares equal to itself — same reference — so nothing notifies, even
+/// though the contents changed:
+///
+/// ```dart
+/// // Wrong: mutates the same list `state` already holds, then "sets" it
+/// // back to itself — identical, so this never notifies.
+/// controller.update((items) => items..add('x'));
+///
+/// // Right: a new list, so the old and new values compare unequal.
+/// controller.update((items) => [...items, 'x']);
+/// ```
 final class StateController<T> {
   /// Creates a controller holding [initial].
   StateController(T initial) : _state = initial;
@@ -15,7 +32,8 @@ final class StateController<T> {
   T get state => _state;
 
   /// Sets the current value. A no-op (no notification) if [value] equals
-  /// the current one.
+  /// the current one — see the class doc comment for why that means [T]
+  /// must be treated as immutable.
   set state(T value) {
     if (value == _state) return;
     _state = value;
@@ -25,7 +43,9 @@ final class StateController<T> {
   }
 
   /// Sets the state to `updater(current state)` — sugar for the common
-  /// "derive the next value from the current one" case.
+  /// "derive the next value from the current one" case. [updater] must
+  /// return a new value rather than mutating [current] in place — see the
+  /// class doc comment.
   void update(T Function(T current) updater) => state = updater(_state);
 
   /// Subscribes [listener] to state changes. Returns an unsubscriber.

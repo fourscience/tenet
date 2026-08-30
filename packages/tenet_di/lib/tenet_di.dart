@@ -17,8 +17,11 @@
 ///
 /// No container of your own at hand — a `main()`, a background service,
 /// anywhere with no natural container or `BuildContext` to thread
-/// through? Use the top-level [resolve]/[observe], which read through
-/// [rootContainer], a shared default created lazily on first use.
+/// through? [rootContainer] is a shared default created lazily on first
+/// use — `rootContainer.resolve(...)`/`rootContainer.observe(...)` work
+/// out of the box; the bare top-level `resolve`/`observe` sugar around it
+/// is one opt-in import away, at `package:tenet_di/global.dart` — see
+/// that file's doc comment for why it isn't part of this one.
 ///
 /// For a mutable, observable dependency, use [StateProvider] instead of a
 /// plain [Provider]. See `tenet_di_flutter` for `ProviderScope`/
@@ -28,5 +31,5 @@ library;
 export 'src/container.dart';
 export 'src/provider.dart';
 export 'src/ref.dart';
-export 'src/root_container.dart';
+export 'src/root_container.dart' hide resolve, observe;
 export 'src/state_provider.dart';

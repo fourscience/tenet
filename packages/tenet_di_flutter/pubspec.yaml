@@ -4,7 +4,7 @@ description: >-
   widget subtree, and ConsumerWidget/Consumer rebuild automatically when
   the providers they watch change — a minimal, Riverpod/Refena-flavored
   developer experience.
-version: 0.3.0
+version: 0.4.0
 homepage: https://github.com/fourscience/tenet/tree/main/packages/tenet_di_flutter
 repository: https://github.com/fourscience/tenet
 issue_tracker: https://github.com/fourscience/tenet/issues
@@ -18,7 +18,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  tenet_di: ^0.2.0
+  tenet_di: ^0.3.0
 
 dev_dependencies:
   flutter_lints: ^6.0.0
