@@ -1,0 +1,26 @@
+name: casus_flutter_example
+description: Example Flutter app for casus_flutter.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.6.0
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  casus_flutter:
+    path: ../
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+# casus isn't published yet, so point the example at the workspace copy
+# directly. Once casus is on pub.dev, casus_flutter's own pubspec
+# constraint on it is enough and this override can go away.
+dependency_overrides:
+  casus:
+    path: ../../casus

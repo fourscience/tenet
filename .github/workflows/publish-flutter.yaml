@@ -1,30 +1,43 @@
-# Publishes tenet_di_flutter to pub.dev. See publish.yaml for the
-# pure-Dart packages (reson, casus, tenet_di, tenet_rxdart) — same idea, just
-# using the Flutter SDK/toolchain instead of the plain Dart one, since
-# `flutter analyze`/`flutter test`/`flutter pub publish` are needed for a
-# package with a Flutter SDK dependency.
+# Publishes one of the Flutter-dependent packages (tenet_di_flutter,
+# casus_flutter) to pub.dev. See publish.yaml for the pure-Dart packages
+# (reson, casus, tenet_di, tenet_rxdart) — same idea, just using the
+# Flutter SDK/toolchain instead of the plain Dart one, since `flutter
+# analyze`/`flutter test`/`flutter pub publish` are needed for a package
+# with a Flutter SDK dependency.
 #
 # Trigger: run manually from the Actions tab (or `gh workflow run
-# publish-flutter.yaml`). The package's pubspec.yaml `version:` must
-# already be bumped and CHANGELOG.md must already have an entry for it.
+# publish-flutter.yaml -f package=tenet_di_flutter`), picking the package
+# to publish. The package's pubspec.yaml `version:` must already be
+# bumped and CHANGELOG.md must already have an entry for it.
 #
 # Authentication: see publish.yaml's header comment — same
 # `PUB_CREDENTIALS` repository secret, same one-time setup.
-name: Publish tenet_di_flutter
+name: Publish a Flutter package
 
 on:
   workflow_dispatch:
+    inputs:
+      package:
+        description: Package to publish
+        required: true
+        type: choice
+        options:
+          - tenet_di_flutter
+          - casus_flutter
 
 permissions:
   contents: read
 
 jobs:
   publish:
-    name: Publish tenet_di_flutter
+    name: Publish ${{ github.event.inputs.package }}
     runs-on: ubuntu-latest
     # Configure this environment under Settings -> Environments to require
     # manual approval before a publish runs, if desired.
     environment: pub.dev
+    defaults:
+      run:
+        working-directory: packages/${{ github.event.inputs.package }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -35,14 +48,13 @@ jobs:
           channel: stable
 
       - name: Install workspace dependencies
+        working-directory: .
         run: flutter pub get
 
       - name: Analyze
-        working-directory: packages/tenet_di_flutter
         run: flutter analyze
 
       - name: Run tests
-        working-directory: packages/tenet_di_flutter
         run: flutter test
 
       - name: Install pub credentials
@@ -58,9 +70,7 @@ jobs:
           printf '%s' "$PUB_CREDENTIALS" > ~/.config/dart/pub-credentials.json
 
       - name: Dry run
-        working-directory: packages/tenet_di_flutter
         run: flutter pub publish --dry-run
 
       - name: Publish
-        working-directory: packages/tenet_di_flutter
         run: flutter pub publish --force
