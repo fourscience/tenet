@@ -1,11 +1,11 @@
 # Publishes one of the pure-Dart packages (reson, casus, vine,
-# tenet_rxdart) to pub.dev — vine_flutter publishes via publish-flutter.yaml
-# instead. This workflow still sets up Flutter: resolving the workspace
-# at all requires it (vine_flutter is a member), and `dart test`/
-# `dart pub publish` each re-verify that resolution themselves and fail
-# the same way `dart pub get` would — so those two go through
-# `flutter pub` below, even though the package being published has no
-# Flutter dependency of its own.
+# tenet_rxdart) to pub.dev — casus_flutter and vine_flutter publish via
+# publish-flutter.yaml instead. This workflow still sets up Flutter:
+# resolving the workspace at all requires it (casus_flutter and
+# vine_flutter are members), and `dart test`/`dart pub publish` each
+# re-verify that resolution themselves and fail the same way `dart pub
+# get` would — so those two go through `flutter pub` below, even though
+# the package being published has no Flutter dependency of its own.
 #
 # Trigger: run manually from the Actions tab (or `gh workflow run
 # publish.yaml -f package=reson`), picking the package to publish. The
@@ -62,11 +62,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # The workspace includes vine_flutter, which depends on the
-      # Flutter SDK — resolving the workspace at all requires Flutter,
-      # even though this workflow only ever publishes a pure-Dart
-      # package. `flutter pub get` subsumes `dart pub get` here; the
-      # rest of this workflow uses plain `dart` commands.
+      # The workspace includes casus_flutter and vine_flutter, which
+      # depend on the Flutter SDK — resolving the workspace at all
+      # requires Flutter, even though this workflow only ever publishes
+      # a pure-Dart package. `flutter pub get` subsumes `dart pub get`
+      # here; the rest of this workflow uses plain `dart` commands.
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:

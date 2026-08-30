@@ -17,15 +17,15 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # The workspace includes vine_flutter, which depends on the
-      # Flutter SDK — resolving the workspace at all (even just for the
-      # three pure-Dart packages) requires Flutter, since pub workspaces
-      # resolve every member together. Plain `dart analyze`/`dart run`
-      # work fine afterward against the already-resolved package graph,
-      # but `dart test` and `dart pub publish` each re-verify the whole
-      # workspace's resolution themselves and fail the same way `dart pub
-      # get` would — so those two specifically go through `flutter pub`
-      # below, even for the pure-Dart packages.
+      # The workspace includes casus_flutter and vine_flutter, which
+      # depend on the Flutter SDK — resolving the workspace at all (even
+      # just for the pure-Dart packages) requires Flutter, since pub
+      # workspaces resolve every member together. Plain `dart analyze`/
+      # `dart run` work fine afterward against the already-resolved
+      # package graph, but `dart test` and `dart pub publish` each
+      # re-verify the whole workspace's resolution themselves and fail
+      # the same way `dart pub get` would — so those two specifically go
+      # through `flutter pub` below, even for the pure-Dart packages.
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -62,18 +62,27 @@ jobs:
             (cd "packages/$pkg" && flutter pub publish --dry-run)
           done
 
-      - name: Analyze & test vine_flutter
-        working-directory: packages/vine_flutter
+      - name: Analyze & test casus_flutter, vine_flutter
         run: |
-          flutter analyze
-          flutter test
+          set -e
+          for pkg in casus_flutter vine_flutter; do
+            echo "::group::$pkg"
+            (cd "packages/$pkg" && flutter analyze && flutter test)
+            echo "::endgroup::"
+          done
 
-      - name: Verify vine_flutter is publish-ready
-        working-directory: packages/vine_flutter
-        run: flutter pub publish --dry-run
-
-      - name: Analyze vine_flutter's example app
-        working-directory: packages/vine_flutter/example
+      - name: Verify casus_flutter, vine_flutter are publish-ready
         run: |
-          flutter pub get
-          flutter analyze
+          set -e
+          for pkg in casus_flutter vine_flutter; do
+            (cd "packages/$pkg" && flutter pub publish --dry-run)
+          done
+
+      - name: Analyze casus_flutter's and vine_flutter's example apps
+        run: |
+          set -e
+          for pkg in casus_flutter vine_flutter; do
+            echo "::group::$pkg/example"
+            (cd "packages/$pkg/example" && flutter pub get && flutter analyze)
+            echo "::endgroup::"
+          done
