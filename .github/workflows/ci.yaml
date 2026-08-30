@@ -37,27 +37,28 @@ jobs:
       - name: Verify formatting (whole packages/ tree)
         run: dart format --output=none --set-exit-if-changed packages
 
-      - name: Analyze & test tenet, tenet_result, tenet_di
+      - name: Analyze & test tenet, tenet_result, tenet_di, tenet_rxdart
         run: |
           set -e
-          for pkg in tenet tenet_result tenet_di; do
+          for pkg in tenet tenet_result tenet_di tenet_rxdart; do
             echo "::group::$pkg"
             (cd "packages/$pkg" && dart analyze --fatal-infos && flutter pub run test)
             echo "::endgroup::"
           done
 
-      - name: Run tenet/tenet_result/tenet_di examples
+      - name: Run tenet/tenet_result/tenet_di/tenet_rxdart examples
         run: |
           set -e
           (cd packages/tenet && dart run example/tenet_example.dart)
           (cd packages/tenet && dart run example/intent_command_event_example.dart)
           (cd packages/tenet_result && dart run example/tenet_result_example.dart)
           (cd packages/tenet_di && dart run example/tenet_di_example.dart)
+          (cd packages/tenet_rxdart && dart run example/tenet_rxdart_example.dart)
 
-      - name: Verify tenet, tenet_result, tenet_di are publish-ready
+      - name: Verify tenet, tenet_result, tenet_di, tenet_rxdart are publish-ready
         run: |
           set -e
-          for pkg in tenet tenet_result tenet_di; do
+          for pkg in tenet tenet_result tenet_di tenet_rxdart; do
             (cd "packages/$pkg" && flutter pub publish --dry-run)
           done
 

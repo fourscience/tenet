@@ -1,5 +1,5 @@
-# Publishes one of the pure-Dart packages (tenet, tenet_result, tenet_di)
-# to pub.dev — tenet_di_flutter publishes via publish-flutter.yaml
+# Publishes one of the pure-Dart packages (tenet, tenet_result, tenet_di,
+# tenet_rxdart) to pub.dev — tenet_di_flutter publishes via publish-flutter.yaml
 # instead. This workflow still sets up Flutter: resolving the workspace
 # at all requires it (tenet_di_flutter is a member), and `dart test`/
 # `dart pub publish` each re-verify that resolution themselves and fail
@@ -43,6 +43,7 @@ on:
           - tenet
           - tenet_result
           - tenet_di
+          - tenet_rxdart
 
 permissions:
   contents: read
