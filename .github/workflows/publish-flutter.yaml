@@ -1,5 +1,5 @@
-# Publishes tenet_di_flutter to pub.dev. See publish.yaml for the
-# pure-Dart packages (reson, casus, tenet_di, tenet_rxdart) — same idea, just
+# Publishes vine_flutter to pub.dev. See publish.yaml for the
+# pure-Dart packages (reson, casus, vine, tenet_rxdart) — same idea, just
 # using the Flutter SDK/toolchain instead of the plain Dart one, since
 # `flutter analyze`/`flutter test`/`flutter pub publish` are needed for a
 # package with a Flutter SDK dependency.
@@ -10,7 +10,7 @@
 #
 # Authentication: see publish.yaml's header comment — same
 # `PUB_CREDENTIALS` repository secret, same one-time setup.
-name: Publish tenet_di_flutter
+name: Publish vine_flutter
 
 on:
   workflow_dispatch:
@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   publish:
-    name: Publish tenet_di_flutter
+    name: Publish vine_flutter
     runs-on: ubuntu-latest
     # Configure this environment under Settings -> Environments to require
     # manual approval before a publish runs, if desired.
@@ -38,11 +38,11 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
-        working-directory: packages/tenet_di_flutter
+        working-directory: packages/vine_flutter
         run: flutter analyze
 
       - name: Run tests
-        working-directory: packages/tenet_di_flutter
+        working-directory: packages/vine_flutter
         run: flutter test
 
       - name: Install pub credentials
@@ -58,9 +58,9 @@ jobs:
           printf '%s' "$PUB_CREDENTIALS" > ~/.config/dart/pub-credentials.json
 
       - name: Dry run
-        working-directory: packages/tenet_di_flutter
+        working-directory: packages/vine_flutter
         run: flutter pub publish --dry-run
 
       - name: Publish
-        working-directory: packages/tenet_di_flutter
+        working-directory: packages/vine_flutter
         run: flutter pub publish --force

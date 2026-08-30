@@ -17,7 +17,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # The workspace includes tenet_di_flutter, which depends on the
+      # The workspace includes vine_flutter, which depends on the
       # Flutter SDK — resolving the workspace at all (even just for the
       # three pure-Dart packages) requires Flutter, since pub workspaces
       # resolve every member together. Plain `dart analyze`/`dart run`
@@ -37,43 +37,43 @@ jobs:
       - name: Verify formatting (whole packages/ tree)
         run: dart format --output=none --set-exit-if-changed packages
 
-      - name: Analyze & test reson, casus, tenet_di, tenet_rxdart
+      - name: Analyze & test reson, casus, vine, tenet_rxdart
         run: |
           set -e
-          for pkg in reson casus tenet_di tenet_rxdart; do
+          for pkg in reson casus vine tenet_rxdart; do
             echo "::group::$pkg"
             (cd "packages/$pkg" && dart analyze --fatal-infos && flutter pub run test)
             echo "::endgroup::"
           done
 
-      - name: Run reson/casus/tenet_di/tenet_rxdart examples
+      - name: Run reson/casus/vine/tenet_rxdart examples
         run: |
           set -e
           (cd packages/reson && dart run example/reson_example.dart)
           (cd packages/reson && dart run example/intent_command_event_example.dart)
           (cd packages/casus && dart run example/casus_example.dart)
-          (cd packages/tenet_di && dart run example/tenet_di_example.dart)
+          (cd packages/vine && dart run example/vine_example.dart)
           (cd packages/tenet_rxdart && dart run example/tenet_rxdart_example.dart)
 
-      - name: Verify reson, casus, tenet_di, tenet_rxdart are publish-ready
+      - name: Verify reson, casus, vine, tenet_rxdart are publish-ready
         run: |
           set -e
-          for pkg in reson casus tenet_di tenet_rxdart; do
+          for pkg in reson casus vine tenet_rxdart; do
             (cd "packages/$pkg" && flutter pub publish --dry-run)
           done
 
-      - name: Analyze & test tenet_di_flutter
-        working-directory: packages/tenet_di_flutter
+      - name: Analyze & test vine_flutter
+        working-directory: packages/vine_flutter
         run: |
           flutter analyze
           flutter test
 
-      - name: Verify tenet_di_flutter is publish-ready
-        working-directory: packages/tenet_di_flutter
+      - name: Verify vine_flutter is publish-ready
+        working-directory: packages/vine_flutter
         run: flutter pub publish --dry-run
 
-      - name: Analyze tenet_di_flutter's example app
-        working-directory: packages/tenet_di_flutter/example
+      - name: Analyze vine_flutter's example app
+        working-directory: packages/vine_flutter/example
         run: |
           flutter pub get
           flutter analyze

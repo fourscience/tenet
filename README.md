@@ -10,13 +10,13 @@ one [Dart pub workspace](https://dart.dev/tools/pub/workspaces):
 |---|---|---|
 | [`reson`](packages/reson) | A time-aware, effect-separated state management library — State/Flow/Ripple/Echo, plus an optional Intent/Command/Event taxonomy. | No |
 | [`casus`](packages/casus) | A minimal `Result<T, E>` type: explicit, typed success/failure instead of throwing. | No |
-| [`tenet_di`](packages/tenet_di) | A minimal, Riverpod/Refena-flavored dependency injection library — declarative providers, a lazy caching container, an invalidation/notification graph, testing overrides. | No |
-| [`tenet_di_flutter`](packages/tenet_di_flutter) | Flutter bindings for `tenet_di`: `ProviderScope`, `ConsumerWidget`, `Consumer`. | Yes |
+| [`vine`](packages/vine) | A dependency injection + reactive state container — declarative `Vine`s (single/transient/eager/cell/computed/future/each), a `Garden` to tap/set/watch/effect them, scoped overrides, testing overrides. | No |
+| [`vine_flutter`](packages/vine_flutter) | Flutter bindings for `vine`: `Trellis`, `VineWidget`, `context.watch`, `SuspendedVine`. | Yes |
 | [`tenet_rxdart`](packages/tenet_rxdart) | rxdart interop for `reson`: rxdart-backed throttle/debounce/retry Ripple combinators, plus driving a `Store` from a `Stream<E>` pipeline. | No |
 
 Each package is independently versioned and publishable, has its own
 `CHANGELOG.md`/`LICENSE`/tests/example, and has no dependency on any
-other package here except the one it explicitly binds to (`tenet_di_flutter` → `tenet_di`, `tenet_rxdart` → `reson`) — pick the
+other package here except the one it explicitly binds to (`vine_flutter` → `vine`, `tenet_rxdart` → `reson`) — pick the
 ones you need. Follow the link to a package above for its full README.
 
 ## Repository layout
@@ -25,8 +25,8 @@ ones you need. Follow the link to a package above for its full README.
 packages/
   reson/               # state management (Flow/Ripple/Echo/Intent/Command/Event)
   casus/               # Result<T, E>
-  tenet_di/              # DI core (pure Dart)
-  tenet_di_flutter/       # DI Flutter bindings
+  vine/                  # DI + reactive state container (pure Dart)
+  vine_flutter/           # DI + reactive state container, Flutter bindings
   tenet_rxdart/            # rxdart interop for reson
 ```
 
@@ -39,7 +39,7 @@ by name without a manual `path:` override.
 
 Resolving the workspace needs the **Flutter SDK on `PATH`**, even though
 four of the five packages have no Flutter dependency of their own: pub
-workspaces resolve every member together, and `tenet_di_flutter` (one
+workspaces resolve every member together, and `vine_flutter` (one
 member) depends on the Flutter SDK, so plain `dart pub get` at the root
 fails outright — `flutter pub get` is a superset that handles it.
 Individual pure-Dart packages can still be analyzed/tested with the
@@ -50,7 +50,7 @@ flutter pub get                 # resolves the whole workspace (once)
 cd packages/reson && dart test  # plain `dart` commands work per-package after that
 ```
 
-`tenet_di_flutter` itself needs `flutter analyze`/`flutter test` instead
+`vine_flutter` itself needs `flutter analyze`/`flutter test` instead
 of the `dart` equivalents (it's the only package that actually uses
 Flutter APIs), and its `example/` is a standalone Flutter app with its
 own `flutter pub get`.
@@ -63,9 +63,9 @@ for every package, in that order, on each push and pull request.
 Each package publishes independently to pub.dev via a manually-triggered
 workflow:
 
-- `.github/workflows/publish.yaml` — `reson`, `casus`, `tenet_di`,
+- `.github/workflows/publish.yaml` — `reson`, `casus`, `vine`,
   `tenet_rxdart` (pick one from the workflow's `package` input).
-- `.github/workflows/publish-flutter.yaml` — `tenet_di_flutter`.
+- `.github/workflows/publish-flutter.yaml` — `vine_flutter`.
 
 Both authenticate via a `PUB_CREDENTIALS` repository secret — see either
 workflow's header comment for one-time setup.
