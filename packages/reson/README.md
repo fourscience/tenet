@@ -1,7 +1,7 @@
-# tenet
+# reson
 
 [![CI](https://github.com/fourscience/tenet/actions/workflows/ci.yaml/badge.svg)](https://github.com/fourscience/tenet/actions/workflows/ci.yaml)
-[![pub package](https://img.shields.io/pub/v/tenet.svg)](https://pub.dev/packages/tenet)
+[![pub package](https://img.shields.io/pub/v/reson.svg)](https://pub.dev/packages/reson)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A time-aware, effect-separated state management library for Dart and
@@ -78,7 +78,7 @@ write through the narrow `StateEmitter` interface it's handed.
 
 ```yaml
 dependencies:
-  tenet: ^0.1.0
+  reson: ^0.1.0
 ```
 
 Then:
@@ -87,14 +87,14 @@ Then:
 dart pub get
 ```
 
-The test harness lives at `package:tenet/tenet_testing.dart` — a second
+The test harness lives at `package:reson/reson_testing.dart` — a second
 entry point in this same package, not a separate dependency to add. See
 [Testing](#testing).
 
 ## Quick start
 
 ```dart
-import 'package:tenet/tenet.dart';
+import 'package:reson/reson.dart';
 
 class AddItem {
   final String item;
@@ -451,13 +451,13 @@ separation, and both can be used side by side in the same `Feature`.
 
 ## Testing
 
-`tenet_testing.dart` is a separate entry point so production code (which
-only imports `tenet.dart`) never pulls in test-only helpers. It exports
+`reson_testing.dart` is a separate entry point so production code (which
+only imports `reson.dart`) never pulls in test-only helpers. It exports
 `FeatureHarness`, which drives a `Feature` in isolation:
 
 ```dart
-import 'package:tenet/tenet.dart';
-import 'package:tenet/tenet_testing.dart';
+import 'package:reson/reson.dart';
+import 'package:reson/reson_testing.dart';
 import 'package:test/test.dart';
 
 test('adds an item', () {
@@ -505,7 +505,7 @@ pattern above.
 
 ## Flutter integration
 
-`tenet` has no Flutter dependency, so wiring a `Store` into widgets is a
+`reson` has no Flutter dependency, so wiring a `Store` into widgets is a
 few lines with whatever rebuild mechanism you already use. With a plain
 `StatefulWidget`:
 
@@ -561,8 +561,8 @@ navigating away cancels in-flight work instead of leaking it.
 
 ```
 lib/
-  tenet.dart                 # public entry point (barrel export)
-  tenet_testing.dart         # test-only entry point (FeatureHarness)
+  reson.dart                 # public entry point (barrel export)
+  reson_testing.dart         # test-only entry point (FeatureHarness)
   src/
     core.dart                # Flow, StateEmitter, StateLens, RippleBody, EchoBody
     transaction.dart         # Transaction — the time-travel ledger record
@@ -595,7 +595,7 @@ pull request.
 
 ## Versioning and releases
 
-`tenet` follows [Semantic Versioning](https://semver.org/). Every release
+`reson` follows [Semantic Versioning](https://semver.org/). Every release
 is recorded in [`CHANGELOG.md`](CHANGELOG.md). Publishing to pub.dev is
 automated by `.github/workflows/publish.yaml`, which runs on version tags
 (`v*.*.*`) after the same checks CI runs — see that workflow's header

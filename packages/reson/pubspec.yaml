@@ -1,10 +1,10 @@
-name: tenet
+name: reson
 description: >-
   A time-aware, effect-separated state management library for Dart and
   Flutter. State is now, Flows change it purely, Ripples fetch it
   asynchronously, Echoes react to it externally.
 version: 0.6.1
-homepage: https://github.com/fourscience/tenet/tree/main/packages/tenet
+homepage: https://github.com/fourscience/tenet/tree/main/packages/reson
 repository: https://github.com/fourscience/tenet
 issue_tracker: https://github.com/fourscience/tenet/issues
 

@@ -1,6 +1,6 @@
-/// rxdart interop for `tenet`.
+/// rxdart interop for `reson`.
 ///
-/// `retry`/`withTimeout`/`throttled`, `tenet`'s own Ripple combinators,
+/// `retry`/`withTimeout`/`throttled`, `reson`'s own Ripple combinators,
 /// cover the common cases without pulling in a dependency. This package
 /// is for reaching further: `rxThrottle`/`rxDebounce` back onto rxdart's
 /// real `throttleTime`/`debounceTime` (trailing-edge support, dynamic
@@ -27,7 +27,7 @@
 /// ```
 library;
 
-export 'package:tenet/tenet.dart';
+export 'package:reson/reson.dart';
 
 export 'src/emission_operators.dart';
 export 'src/retry_operators.dart';

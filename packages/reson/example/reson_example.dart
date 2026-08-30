@@ -1,6 +1,6 @@
-// Runnable example for the `tenet` package.
+// Runnable example for the `reson` package.
 //
-// Demonstrates all four Tenet concepts against a small "counter with
+// Demonstrates all four core concepts against a small "counter with
 // remote sync" feature:
 //   * Flow      — `Increment` bumps the counter purely and synchronously.
 //   * Ripple    — `SyncRequested` pushes the counter to a simulated remote
@@ -11,11 +11,11 @@
 //                 rolls back automatically if the Ripple fails.
 //
 // Run it with:
-//   dart run example/tenet_example.dart
+//   dart run example/reson_example.dart
 
 import 'dart:async';
 
-import 'package:tenet/tenet.dart';
+import 'package:reson/reson.dart';
 
 /// Bumps the counter by [amount]. Handled by a Flow.
 class Increment {

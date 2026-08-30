@@ -1,4 +1,4 @@
-/// Tenet — a time-aware, effect-separated state management library.
+/// reson — a time-aware, effect-separated state management library.
 ///
 /// Core mental model (one sentence):
 ///   "State is now, Flows change it purely, Ripples fetch it asynchronously,

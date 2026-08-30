@@ -135,6 +135,6 @@ was reproducible against 0.3.0 and now has a regression test.
 
 ## 0.1.0
 
-- Initial release of `tenet`: `Store`, `Feature`, `FlowRegistry`,
+- Initial release of `reson`: `Store`, `Feature`, `FlowRegistry`,
   `EchoRegistry`, `FlowScope`, the `retry`/`withTimeout`/`debounced` Ripple
   combinators, and the `FeatureHarness` test toolkit.

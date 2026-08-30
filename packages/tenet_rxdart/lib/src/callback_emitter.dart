@@ -1,4 +1,4 @@
-import 'package:tenet/tenet.dart';
+import 'package:reson/reson.dart';
 
 /// Adapts a plain `void Function(S)` (e.g. `StreamController.add`) into a
 /// [StateEmitter] so it can stand in for the `emit` a [RippleBody] expects.
