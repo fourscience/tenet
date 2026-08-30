@@ -1,0 +1,24 @@
+name: casus_flutter
+description: >-
+  Flutter bindings for casus: ResourceBuilder renders a Resource<T> via
+  fold — loading/data/error, with stale-while-revalidate support.
+version: 1.0.0
+homepage: https://github.com/fourscience/tenet/tree/main/packages/casus_flutter
+repository: https://github.com/fourscience/tenet
+issue_tracker: https://github.com/fourscience/tenet/issues
+
+environment:
+  sdk: ^3.6.0
+  flutter: '>=3.19.0'
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  casus: ^1.0.0
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter

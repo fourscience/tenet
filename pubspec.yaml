@@ -7,6 +7,7 @@ environment:
 workspace:
   - packages/reson
   - packages/casus
+  - packages/casus_flutter
   - packages/tenet_di
   - packages/tenet_di_flutter
   - packages/tenet_rxdart

@@ -17,15 +17,15 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # The workspace includes tenet_di_flutter, which depends on the
-      # Flutter SDK — resolving the workspace at all (even just for the
-      # three pure-Dart packages) requires Flutter, since pub workspaces
-      # resolve every member together. Plain `dart analyze`/`dart run`
-      # work fine afterward against the already-resolved package graph,
-      # but `dart test` and `dart pub publish` each re-verify the whole
-      # workspace's resolution themselves and fail the same way `dart pub
-      # get` would — so those two specifically go through `flutter pub`
-      # below, even for the pure-Dart packages.
+      # The workspace includes tenet_di_flutter and casus_flutter, which
+      # depend on the Flutter SDK — resolving the workspace at all (even
+      # just for the pure-Dart packages) requires Flutter, since pub
+      # workspaces resolve every member together. Plain `dart analyze`/
+      # `dart run` work fine afterward against the already-resolved
+      # package graph, but `dart test` and `dart pub publish` each
+      # re-verify the whole workspace's resolution themselves and fail
+      # the same way `dart pub get` would — so those two specifically go
+      # through `flutter pub` below, even for the pure-Dart packages.
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -62,18 +62,27 @@ jobs:
             (cd "packages/$pkg" && flutter pub publish --dry-run)
           done
 
-      - name: Analyze & test tenet_di_flutter
-        working-directory: packages/tenet_di_flutter
+      - name: Analyze & test tenet_di_flutter, casus_flutter
         run: |
-          flutter analyze
-          flutter test
+          set -e
+          for pkg in tenet_di_flutter casus_flutter; do
+            echo "::group::$pkg"
+            (cd "packages/$pkg" && flutter analyze && flutter test)
+            echo "::endgroup::"
+          done
 
-      - name: Verify tenet_di_flutter is publish-ready
-        working-directory: packages/tenet_di_flutter
-        run: flutter pub publish --dry-run
-
-      - name: Analyze tenet_di_flutter's example app
-        working-directory: packages/tenet_di_flutter/example
+      - name: Verify tenet_di_flutter, casus_flutter are publish-ready
         run: |
-          flutter pub get
-          flutter analyze
+          set -e
+          for pkg in tenet_di_flutter casus_flutter; do
+            (cd "packages/$pkg" && flutter pub publish --dry-run)
+          done
+
+      - name: Analyze tenet_di_flutter's and casus_flutter's example apps
+        run: |
+          set -e
+          for pkg in tenet_di_flutter casus_flutter; do
+            echo "::group::$pkg/example"
+            (cd "packages/$pkg/example" && flutter pub get && flutter analyze)
+            echo "::endgroup::"
+          done
