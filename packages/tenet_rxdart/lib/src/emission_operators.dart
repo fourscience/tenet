@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:rxdart/rxdart.dart';
-import 'package:tenet/tenet.dart';
+import 'package:reson/reson.dart';
 
 import 'callback_emitter.dart';
 
@@ -68,7 +68,7 @@ RippleBody<S, E> rxTransform<S, E>(
 }
 
 /// Rate-limits [body]'s emissions via rxdart's `throttleTime`, instead of
-/// `tenet`'s own `throttled`. Unlike `throttled`, this supports rxdart's
+/// `reson`'s own `throttled`. Unlike `throttled`, this supports rxdart's
 /// `trailing` option (emit the last value in the window too, not just the
 /// first).
 ///
@@ -96,7 +96,7 @@ RippleBody<S, E> rxThrottle<S, E>(
 
 /// Delays [body]'s emissions via rxdart's `debounceTime`, instead of
 /// hand-rolling one: only a value not followed by another within
-/// [duration] reaches the real emitter — unlike `tenet`'s `throttled`,
+/// [duration] reaches the real emitter — unlike `reson`'s `throttled`,
 /// which is leading-edge and never delays a value to wait for silence.
 ///
 /// Like [rxThrottle], this debounces [body]'s own `emit` calls *within

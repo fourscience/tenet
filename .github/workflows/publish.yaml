@@ -1,4 +1,4 @@
-# Publishes one of the pure-Dart packages (tenet, casus, tenet_di,
+# Publishes one of the pure-Dart packages (reson, casus, tenet_di,
 # tenet_rxdart) to pub.dev — tenet_di_flutter publishes via publish-flutter.yaml
 # instead. This workflow still sets up Flutter: resolving the workspace
 # at all requires it (tenet_di_flutter is a member), and `dart test`/
@@ -8,7 +8,7 @@
 # Flutter dependency of its own.
 #
 # Trigger: run manually from the Actions tab (or `gh workflow run
-# publish.yaml -f package=tenet`), picking the package to publish. The
+# publish.yaml -f package=reson`), picking the package to publish. The
 # package's pubspec.yaml `version:` must already be bumped and
 # CHANGELOG.md must already have an entry for it — the same conventions
 # `dart pub publish` itself enforces.
@@ -40,7 +40,7 @@ on:
         required: true
         type: choice
         options:
-          - tenet
+          - reson
           - casus
           - tenet_di
           - tenet_rxdart

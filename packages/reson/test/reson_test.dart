@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:tenet/tenet.dart';
-import 'package:tenet/tenet_testing.dart';
+import 'package:reson/reson.dart';
+import 'package:reson/reson_testing.dart';
 import 'package:test/test.dart';
 
 // -- Test domain -------------------------------------------------------------

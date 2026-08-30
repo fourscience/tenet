@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:tenet/tenet.dart';
+import 'package:reson/reson.dart';
 
 /// Drives a [Store] from a `Stream<E>` you've already built with whatever
 /// rxdart operators you want — `switchMap`, `debounceTime`, `retryWhen`,
-/// anything — instead of composing `tenet`'s own combinators around a
+/// anything — instead of composing `reson`'s own combinators around a
 /// single [RippleBody]. Each method subscribes to a stream and calls the
 /// matching write method ([dispatch]/[send]/[runRipple]) for every value
 /// it emits, until the returned [FlowScope] closes.

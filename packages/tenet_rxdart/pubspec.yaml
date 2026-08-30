@@ -1,7 +1,7 @@
 name: tenet_rxdart
 description: >-
-  rxdart interop for tenet: rxThrottle/rxDebounce/rxRetry/rxRetryWhen wrap
-  a Ripple with rxdart's real operators instead of tenet's own
+  rxdart interop for reson: rxThrottle/rxDebounce/rxRetry/rxRetryWhen wrap
+  a Ripple with rxdart's real operators instead of reson's own
   retry/throttled, plus a Store extension for driving dispatch/send/
   runRipple straight from an rx-built Stream pipeline.
 version: 0.1.0
@@ -16,7 +16,7 @@ resolution: workspace
 
 dependencies:
   rxdart: ^0.28.0
-  tenet: ^0.3.0
+  reson: ^0.6.1
 
 dev_dependencies:
   lints: ^6.0.0

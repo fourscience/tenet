@@ -46,7 +46,7 @@ Future<void> main() async {
   final remote = FlakyRemote();
   store.onError((error, _) => print('[error] $error'));
 
-  // -- rxRetry: retry via Rx.retryWhen, same shape as tenet's own retry --
+  // -- rxRetry: retry via Rx.retryWhen, same shape as reson's own retry --
   print('== rxRetry ==');
   final resilientSync = rxRetry<SyncState, SyncRequested>(
     (event, emit) async {
@@ -91,7 +91,7 @@ Future<void> main() async {
       'emit() calls (expected 2: the last "syncing" value, then "synced")');
 
   // -- StoreRx.dispatchStream: drive dispatch from a Stream<E> built with --
-  // -- ordinary rxdart operators, entirely outside tenet's own combinators --
+  // -- ordinary rxdart operators, entirely outside reson's own combinators --
   print('\n== StoreRx.dispatchStream ==');
   final controller = StreamController<SyncRequested>();
   final pipeline =

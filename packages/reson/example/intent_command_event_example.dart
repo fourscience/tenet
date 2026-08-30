@@ -1,6 +1,6 @@
 // Runnable example for the Intent/Command/Event taxonomy.
 //
-// Where example/tenet_example.dart shows the original Flow/Ripple/Echo
+// Where example/reson_example.dart shows the original Flow/Ripple/Echo
 // model, this one shows the same four concepts through an explicit
 // Intent -> Command -> Event pipeline for a small "session" feature:
 //   * Intent  — LogIn, the only thing a screen sends.
@@ -17,7 +17,7 @@
 
 import 'dart:async';
 
-import 'package:tenet/tenet.dart';
+import 'package:reson/reson.dart';
 
 /// Sent by a screen when the user submits the login form.
 class LogIn extends Intent {

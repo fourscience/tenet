@@ -2,7 +2,7 @@
 // every test here fails against the behavior that shipped in 0.3.0.
 import 'dart:async';
 
-import 'package:tenet/tenet.dart';
+import 'package:reson/reson.dart';
 import 'package:test/test.dart';
 
 // -- Test domain --------------------------------------------------------

@@ -1,33 +1,33 @@
 # tenet
 
 [![CI](https://github.com/fourscience/tenet/actions/workflows/ci.yaml/badge.svg)](https://github.com/fourscience/tenet/actions/workflows/ci.yaml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](packages/tenet/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](packages/reson/LICENSE)
 
 A small family of focused Dart/Flutter libraries, developed together in
 one [Dart pub workspace](https://dart.dev/tools/pub/workspaces):
 
 | Package | What it is | Flutter needed? |
 |---|---|---|
-| [`tenet`](packages/tenet) | A time-aware, effect-separated state management library — State/Flow/Ripple/Echo, plus an optional Intent/Command/Event taxonomy. | No |
+| [`reson`](packages/reson) | A time-aware, effect-separated state management library — State/Flow/Ripple/Echo, plus an optional Intent/Command/Event taxonomy. | No |
 | [`casus`](packages/casus) | A minimal `Result<T, E>` type: explicit, typed success/failure instead of throwing. | No |
 | [`tenet_di`](packages/tenet_di) | A minimal, Riverpod/Refena-flavored dependency injection library — declarative providers, a lazy caching container, an invalidation/notification graph, testing overrides. | No |
 | [`tenet_di_flutter`](packages/tenet_di_flutter) | Flutter bindings for `tenet_di`: `ProviderScope`, `ConsumerWidget`, `Consumer`. | Yes |
-| [`tenet_rxdart`](packages/tenet_rxdart) | rxdart interop for `tenet`: rxdart-backed throttle/debounce/retry Ripple combinators, plus driving a `Store` from a `Stream<E>` pipeline. | No |
+| [`tenet_rxdart`](packages/tenet_rxdart) | rxdart interop for `reson`: rxdart-backed throttle/debounce/retry Ripple combinators, plus driving a `Store` from a `Stream<E>` pipeline. | No |
 
 Each package is independently versioned and publishable, has its own
 `CHANGELOG.md`/`LICENSE`/tests/example, and has no dependency on any
-other package here except the one it explicitly binds to (`tenet_di_flutter` → `tenet_di`, `tenet_rxdart` → `tenet`) — pick the
+other package here except the one it explicitly binds to (`tenet_di_flutter` → `tenet_di`, `tenet_rxdart` → `reson`) — pick the
 ones you need. Follow the link to a package above for its full README.
 
 ## Repository layout
 
 ```
 packages/
-  tenet/               # state management (Flow/Ripple/Echo/Intent/Command/Event)
+  reson/               # state management (Flow/Ripple/Echo/Intent/Command/Event)
   casus/               # Result<T, E>
   tenet_di/              # DI core (pure Dart)
   tenet_di_flutter/       # DI Flutter bindings
-  tenet_rxdart/            # rxdart interop for tenet
+  tenet_rxdart/            # rxdart interop for reson
 ```
 
 Every package lists `resolution: workspace` in its `pubspec.yaml` and is
@@ -47,7 +47,7 @@ plain `dart` commands once that initial resolution is done:
 
 ```
 flutter pub get                 # resolves the whole workspace (once)
-cd packages/tenet && dart test  # plain `dart` commands work per-package after that
+cd packages/reson && dart test  # plain `dart` commands work per-package after that
 ```
 
 `tenet_di_flutter` itself needs `flutter analyze`/`flutter test` instead
@@ -63,7 +63,7 @@ for every package, in that order, on each push and pull request.
 Each package publishes independently to pub.dev via a manually-triggered
 workflow:
 
-- `.github/workflows/publish.yaml` — `tenet`, `casus`, `tenet_di`,
+- `.github/workflows/publish.yaml` — `reson`, `casus`, `tenet_di`,
   `tenet_rxdart` (pick one from the workflow's `package` input).
 - `.github/workflows/publish-flutter.yaml` — `tenet_di_flutter`.
 

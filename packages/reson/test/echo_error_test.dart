@@ -1,7 +1,7 @@
 // Regression test: EchoRegistry.echo's `name` must actually reach error
 // reports, as the README promises — onEchoError is additive and must
 // never change what onError/the Zone already see.
-import 'package:tenet/tenet.dart';
+import 'package:reson/reson.dart';
 import 'package:test/test.dart';
 
 class Ping {

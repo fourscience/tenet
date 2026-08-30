@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import '../../tenet.dart';
+import '../../reson.dart';
 
 /// A single recorded call to a named Echo — see [FeatureHarness.echoCalls].
 ///

@@ -5,7 +5,7 @@ environment:
   sdk: ^3.6.0
 
 workspace:
-  - packages/tenet
+  - packages/reson
   - packages/casus
   - packages/tenet_di
   - packages/tenet_di_flutter

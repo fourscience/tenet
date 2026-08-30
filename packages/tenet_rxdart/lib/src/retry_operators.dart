@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:rxdart/rxdart.dart';
-import 'package:tenet/tenet.dart';
+import 'package:reson/reson.dart';
 
 import 'callback_emitter.dart';
 
@@ -31,7 +31,7 @@ Stream<S> _attempt<S, E>(RippleBody<S, E> body, E event) {
 /// the sole error, if [retryWhenFactory] passes the same `error`/
 /// `stackTrace` through) if it emits an error instead.
 ///
-/// [body] re-runs from scratch on every attempt — same as `tenet`'s own
+/// [body] re-runs from scratch on every attempt — same as `reson`'s own
 /// `retry` — since there is no way to resume a partially-run Ripple.
 /// Unlike [rxRetry], this does **not** special-case `ScopeDeadException`:
 /// pass a [retryWhenFactory] that re-throws it (`(e, s) => e is
@@ -56,13 +56,13 @@ RippleBody<S, E> rxRetryWhen<S, E>(
 
 /// Retries [body] via rxdart's `Rx.retryWhen`, up to [count] times, with a
 /// fixed [delay] between attempts — an `rxRetryWhen` preset matching
-/// `tenet`'s own `retry` signature and semantics (including never
+/// `reson`'s own `retry` signature and semantics (including never
 /// retrying a `ScopeDeadException`, since a cancelled scope means every
 /// further attempt would do real work only to fail the same way), for
 /// projects that want the rest of their Ripple pipeline built from rxdart
 /// operators without giving up that guarantee.
 ///
-/// [body] runs at most `count + 1` times in total, same as `tenet`'s
+/// [body] runs at most `count + 1` times in total, same as `reson`'s
 /// `retry`. Use [rxRetryWhen] directly for backoff, jitter, or
 /// error-type-specific retry logic beyond a fixed delay.
 RippleBody<S, E> rxRetry<S, E>(
