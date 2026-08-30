@@ -1,4 +1,4 @@
-# tenet_result
+# casus
 
 A minimal, dependency-free `Result<T, E>` type for Dart: explicit, typed
 success/failure instead of throwing, sized for Dart 3 pattern matching.
@@ -31,7 +31,7 @@ case to forget.
 
 ```yaml
 dependencies:
-  tenet_result: ^0.1.0
+  casus: ^0.1.0
 ```
 
 ## Usage
@@ -104,7 +104,7 @@ the Dart/Flutter ecosystem) and `Result`-based code.
 dart pub get
 dart analyze
 dart test
-dart run example/tenet_result_example.dart
+dart run example/casus_example.dart
 ```
 
 This package has zero runtime dependencies.

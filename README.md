@@ -9,7 +9,7 @@ one [Dart pub workspace](https://dart.dev/tools/pub/workspaces):
 | Package | What it is | Flutter needed? |
 |---|---|---|
 | [`reson`](packages/reson) | A time-aware, effect-separated state management library — State/Flow/Ripple/Echo, plus an optional Intent/Command/Event taxonomy. | No |
-| [`tenet_result`](packages/tenet_result) | A minimal `Result<T, E>` type: explicit, typed success/failure instead of throwing. | No |
+| [`casus`](packages/casus) | A minimal `Result<T, E>` type: explicit, typed success/failure instead of throwing. | No |
 | [`tenet_di`](packages/tenet_di) | A minimal, Riverpod/Refena-flavored dependency injection library — declarative providers, a lazy caching container, an invalidation/notification graph, testing overrides. | No |
 | [`tenet_di_flutter`](packages/tenet_di_flutter) | Flutter bindings for `tenet_di`: `ProviderScope`, `ConsumerWidget`, `Consumer`. | Yes |
 | [`tenet_rxdart`](packages/tenet_rxdart) | rxdart interop for `reson`: rxdart-backed throttle/debounce/retry Ripple combinators, plus driving a `Store` from a `Stream<E>` pipeline. | No |
@@ -24,7 +24,7 @@ ones you need. Follow the link to a package above for its full README.
 ```
 packages/
   reson/               # state management (Flow/Ripple/Echo/Intent/Command/Event)
-  tenet_result/         # Result<T, E>
+  casus/               # Result<T, E>
   tenet_di/              # DI core (pure Dart)
   tenet_di_flutter/       # DI Flutter bindings
   tenet_rxdart/            # rxdart interop for reson
@@ -63,7 +63,7 @@ for every package, in that order, on each push and pull request.
 Each package publishes independently to pub.dev via a manually-triggered
 workflow:
 
-- `.github/workflows/publish.yaml` — `reson`, `tenet_result`, `tenet_di`,
+- `.github/workflows/publish.yaml` — `reson`, `casus`, `tenet_di`,
   `tenet_rxdart` (pick one from the workflow's `package` input).
 - `.github/workflows/publish-flutter.yaml` — `tenet_di_flutter`.
 

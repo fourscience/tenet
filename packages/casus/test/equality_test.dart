@@ -8,7 +8,7 @@
 // is exactly the scenario the bug was in, so values are widened to
 // `Object` to keep the analyzer from flagging it as a mistake rather than
 // the point of the test.
-import 'package:tenet_result/tenet_result.dart';
+import 'package:casus/casus.dart';
 import 'package:test/test.dart';
 
 Result<int, String> computeOk() => const Ok(1);

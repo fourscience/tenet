@@ -1,4 +1,4 @@
-# Publishes one of the pure-Dart packages (reson, tenet_result, tenet_di,
+# Publishes one of the pure-Dart packages (reson, casus, tenet_di,
 # tenet_rxdart) to pub.dev — tenet_di_flutter publishes via publish-flutter.yaml
 # instead. This workflow still sets up Flutter: resolving the workspace
 # at all requires it (tenet_di_flutter is a member), and `dart test`/
@@ -41,7 +41,7 @@ on:
         type: choice
         options:
           - reson
-          - tenet_result
+          - casus
           - tenet_di
           - tenet_rxdart
 

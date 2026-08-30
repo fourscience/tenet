@@ -1,4 +1,4 @@
-import 'package:tenet_result/tenet_result.dart';
+import 'package:casus/casus.dart';
 import 'package:test/test.dart';
 
 Result<int, String> parseAge(String input) {

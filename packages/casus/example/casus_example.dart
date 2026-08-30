@@ -1,9 +1,9 @@
-// Runnable example for tenet_result.
+// Runnable example for casus.
 //
 // Run it with:
-//   dart run example/tenet_result_example.dart
+//   dart run example/casus_example.dart
 
-import 'package:tenet_result/tenet_result.dart';
+import 'package:casus/casus.dart';
 
 /// Parses and validates an age from raw input — a fallible operation
 /// modeled without throwing.

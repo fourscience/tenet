@@ -37,28 +37,28 @@ jobs:
       - name: Verify formatting (whole packages/ tree)
         run: dart format --output=none --set-exit-if-changed packages
 
-      - name: Analyze & test reson, tenet_result, tenet_di, tenet_rxdart
+      - name: Analyze & test reson, casus, tenet_di, tenet_rxdart
         run: |
           set -e
-          for pkg in reson tenet_result tenet_di tenet_rxdart; do
+          for pkg in reson casus tenet_di tenet_rxdart; do
             echo "::group::$pkg"
             (cd "packages/$pkg" && dart analyze --fatal-infos && flutter pub run test)
             echo "::endgroup::"
           done
 
-      - name: Run reson/tenet_result/tenet_di/tenet_rxdart examples
+      - name: Run reson/casus/tenet_di/tenet_rxdart examples
         run: |
           set -e
           (cd packages/reson && dart run example/reson_example.dart)
           (cd packages/reson && dart run example/intent_command_event_example.dart)
-          (cd packages/tenet_result && dart run example/tenet_result_example.dart)
+          (cd packages/casus && dart run example/casus_example.dart)
           (cd packages/tenet_di && dart run example/tenet_di_example.dart)
           (cd packages/tenet_rxdart && dart run example/tenet_rxdart_example.dart)
 
-      - name: Verify reson, tenet_result, tenet_di, tenet_rxdart are publish-ready
+      - name: Verify reson, casus, tenet_di, tenet_rxdart are publish-ready
         run: |
           set -e
-          for pkg in reson tenet_result tenet_di tenet_rxdart; do
+          for pkg in reson casus tenet_di tenet_rxdart; do
             (cd "packages/$pkg" && flutter pub publish --dry-run)
           done
 

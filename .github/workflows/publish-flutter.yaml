@@ -1,5 +1,5 @@
 # Publishes tenet_di_flutter to pub.dev. See publish.yaml for the
-# pure-Dart packages (reson, tenet_result, tenet_di, tenet_rxdart) — same idea, just
+# pure-Dart packages (reson, casus, tenet_di, tenet_rxdart) — same idea, just
 # using the Flutter SDK/toolchain instead of the plain Dart one, since
 # `flutter analyze`/`flutter test`/`flutter pub publish` are needed for a
 # package with a Flutter SDK dependency.
