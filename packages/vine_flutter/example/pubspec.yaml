@@ -1,0 +1,26 @@
+name: vine_flutter_example
+description: Example Flutter app for vine_flutter.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.6.0
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  vine_flutter:
+    path: ../
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+# vine isn't published yet, so point the example at the workspace copy
+# directly. Once vine is on pub.dev, vine_flutter's own pubspec
+# constraint on it is enough and this override can go away.
+dependency_overrides:
+  vine:
+    path: ../../vine

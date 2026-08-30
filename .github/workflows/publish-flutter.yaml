@@ -1,12 +1,12 @@
-# Publishes one of the Flutter-dependent packages (tenet_di_flutter,
-# casus_flutter) to pub.dev. See publish.yaml for the pure-Dart packages
-# (reson, casus, tenet_di, tenet_rxdart) — same idea, just using the
+# Publishes one of the Flutter-dependent packages (casus_flutter,
+# vine_flutter) to pub.dev. See publish.yaml for the pure-Dart packages
+# (reson, casus, vine, tenet_rxdart) — same idea, just using the
 # Flutter SDK/toolchain instead of the plain Dart one, since `flutter
 # analyze`/`flutter test`/`flutter pub publish` are needed for a package
 # with a Flutter SDK dependency.
 #
 # Trigger: run manually from the Actions tab (or `gh workflow run
-# publish-flutter.yaml -f package=tenet_di_flutter`), picking the package
+# publish-flutter.yaml -f package=vine_flutter`), picking the package
 # to publish. The package's pubspec.yaml `version:` must already be
 # bumped and CHANGELOG.md must already have an entry for it.
 #
@@ -22,8 +22,8 @@ on:
         required: true
         type: choice
         options:
-          - tenet_di_flutter
           - casus_flutter
+          - vine_flutter
 
 permissions:
   contents: read

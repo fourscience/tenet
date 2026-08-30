@@ -1,0 +1,27 @@
+name: vine_flutter
+description: >-
+  Flutter bindings for vine: Trellis owns the garden for a widget
+  subtree, TrellisScope shadows it for a sub-scope, and
+  context.tap/watch/set/refresh give widgets the same reactive
+  primitives a pure-Dart Garden does — context.watch rebuilds the
+  element whenever what it watched actually changes.
+version: 0.1.0
+homepage: https://github.com/fourscience/tenet/tree/main/packages/vine_flutter
+repository: https://github.com/fourscience/tenet
+issue_tracker: https://github.com/fourscience/tenet/issues
+
+environment:
+  sdk: ^3.6.0
+  flutter: '>=3.19.0'
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  vine: ^0.1.0
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
