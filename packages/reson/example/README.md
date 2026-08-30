@@ -1,8 +1,8 @@
-# tenet examples
+# reson examples
 
 Two runnable, self-contained examples, one per dispatch model.
 
-## `tenet_example.dart`
+## `reson_example.dart`
 
 Exercises the core Flow/Ripple/Echo model — a Flow, a Ripple wrapped in
 the `retry`/`withTimeout` combinators, an Echo-driven audit log, an
@@ -11,7 +11,7 @@ small "counter with remote sync" feature.
 
 ```
 dart pub get
-dart run example/tenet_example.dart
+dart run example/reson_example.dart
 ```
 
 Expected output (transaction timestamps aside) is deterministic: two

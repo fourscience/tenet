@@ -1,14 +1,14 @@
 # tenet_rxdart
 
 [rxdart](https://pub.dev/packages/rxdart) interop for
-[`tenet`](../tenet): use rxdart's real operators for throttle/debounce/
-retry instead of (or alongside) `tenet`'s own `retry`/`withTimeout`/
+[`reson`](../reson): use rxdart's real operators for throttle/debounce/
+retry instead of (or alongside) `reson`'s own `retry`/`withTimeout`/
 `throttled` combinators, and drive a `Store` straight from a `Stream<E>`
 pipeline built with any rxdart operator at all.
 
-`tenet` itself stays dependency-free — this is a separate, opt-in
+`reson` itself stays dependency-free — this is a separate, opt-in
 package, so adding it (and rxdart) is a choice you make, not something
-`tenet` forces on you.
+`reson` forces on you.
 
 ## Installation
 
@@ -60,7 +60,7 @@ store.runRippleStream<String>(
 
 ## Ripple combinators: `rxThrottle`, `rxDebounce`, `rxTransform`, `rxRetry`, `rxRetryWhen`
 
-Each is a drop-in alongside `tenet`'s own `retry`/`withTimeout`/
+Each is a drop-in alongside `reson`'s own `retry`/`withTimeout`/
 `throttled` — same shape, `RippleBody<S, E> -> RippleBody<S, E>` — so they
 compose the same way:
 
@@ -73,18 +73,18 @@ final resilientSync = rxRetry<CartState, SyncRequested>(
 ```
 
 - **`rxThrottle(body, duration, {leading, trailing})`** — rxdart's
-  `throttleTime`. Unlike `tenet`'s `throttled`, `trailing: true` also
+  `throttleTime`. Unlike `reson`'s `throttled`, `trailing: true` also
   emits the last value in the window, not just the first.
 - **`rxDebounce(body, duration)`** — rxdart's `debounceTime`: only a value
   not followed by another within `duration` reaches the real emitter.
-  `tenet` has no built-in equivalent — `throttled` is leading-edge and
+  `reson` has no built-in equivalent — `throttled` is leading-edge and
   never delays a value waiting for silence.
 - **`rxTransform(body, transform)`** — the general escape hatch behind
   both: pipes `body`'s emissions through *any* `Stream<S> Function
   (Stream<S>)`, so every other rxdart operator (`bufferTime`, `sample`,
   your own custom transform) is usable too, not just the two named above.
 - **`rxRetry(body, {required count, delay})`** — a safe `rxRetryWhen`
-  preset matching `tenet`'s own `retry` signature: `count` retries, a
+  preset matching `reson`'s own `retry` signature: `count` retries, a
   fixed `delay` between attempts, and — the one behavior it's not safe to
   drop — a `ScopeDeadException` (the Ripple's scope was cancelled) is
   never retried.
