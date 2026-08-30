@@ -16,7 +16,7 @@ resolution: workspace
 
 dependencies:
   rxdart: ^0.28.0
-  tenet: ^0.3.0
+  tenet: ^0.6.1
 
 dev_dependencies:
   lints: ^6.0.0
